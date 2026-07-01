@@ -1,15 +1,36 @@
 import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
+import nextPlugin from "@next/eslint-plugin-next";
 
 const eslintConfig = defineConfig([
-  ...nextVitals,
-  // Override default ignores of eslint-config-next.
+  {
+    files: ["**/*.{js,jsx,mjs}"],
+    plugins: {
+      "@next/next": nextPlugin,
+    },
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+      globals: {
+        React: "readonly",
+        console: "readonly",
+        process: "readonly",
+      },
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+    },
+  },
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
     "build/**",
-    "next-env.d.ts",
+    "node_modules/**",
   ]),
 ]);
 
