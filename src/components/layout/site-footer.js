@@ -8,7 +8,7 @@ export function SiteFooter() {
     <footer className="border-t border-brand-maroon/15 bg-brand-maroon text-brand-ivory">
       <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr] lg:px-8">
         <div>
-          <BrandLogo variant="expanded" className="h-14" />
+          <BrandLogo variant="footer" />
           <p className="mt-3 max-w-sm text-sm leading-6 text-brand-ivory/75">
             Indian traditional jewellery for festive dressing, weddings,
             gifting, and everyday grace.

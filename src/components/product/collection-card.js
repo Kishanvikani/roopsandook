@@ -3,8 +3,6 @@ import Image from "next/image";
 
 export function CollectionCard({ collection, href }) {
   const title = collection.title || collection.name;
-  const description =
-    collection.description || `Explore ${title} pieces from Roop Sandook.`;
 
   return (
     <Link
@@ -27,15 +25,9 @@ export function CollectionCard({ collection, href }) {
         )}
       </div>
       <div className="p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-maroon/65">
-          {collection.count || 0} pieces
-        </p>
-        <h3 className="mt-2 text-xl font-semibold text-brand-maroon">
+        <h3 className="text-xl text-foreground">
           {title}
         </h3>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          {description}
-        </p>
       </div>
     </Link>
   );

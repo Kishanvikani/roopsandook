@@ -111,10 +111,10 @@ export function ProductCard({
         </button>
       </div>
       <div className="p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon/65">
+        {/* <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon/65">
           {product.category?.title || product.collections?.[0]?.title || "Jewellery"}
-        </p>
-        <h3 className="mt-2 min-h-12 text-sm font-semibold leading-6 text-foreground">
+        </p> */}
+        <h3 className="text-md font-semibold leading-6 text-foreground">
           <Link href={productHref}>{product.name}</Link>
         </h3>
         <div className="mt-2 flex items-center justify-between gap-3">

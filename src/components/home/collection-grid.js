@@ -7,13 +7,11 @@ export function CollectionGrid() {
     <section className="bg-background px-4 py-14 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-7xl">
         <SectionHeading
-          eyebrow="Browse by tradition"
-          title="Roop Sandook Collections"
-          description="Explore placeholder collection tiles for traditional Indian jewellery categories."
+          title="Shop by Collections"
           action={{ label: "View all", href: "/collections" }}
         />
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-6 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {collections.map((collection, index) => (
             <CollectionCard
               key={collection.slug}

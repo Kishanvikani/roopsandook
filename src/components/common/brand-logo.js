@@ -1,5 +1,8 @@
 import Image from "next/image";
 
+import footerLogo from "@/assets/svg/footer-logo.svg";
+import headerLogo from "@/assets/svg/header-logo.svg";
+
 const logoMap = {
   small: {
     src: "/smallLogo.svg",
@@ -8,10 +11,16 @@ const logoMap = {
     className: "h-10 w-10",
   },
   expanded: {
-    src: "/extendedLogo.svg",
-    width: 171,
-    height: 100,
+    src: headerLogo,
+    width: 240,
+    height: 80,
     className: "h-12 w-auto",
+  },
+  footer: {
+    src: footerLogo,
+    width: 240,
+    height: 80,
+    className: "h-14 w-auto",
   },
 };
 

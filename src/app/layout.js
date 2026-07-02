@@ -2,6 +2,7 @@ import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CommerceProvider } from "@/components/commerce/commerce-provider";
+import { FloatingWhatsapp } from "@/components/layout/floating-whatsapp";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { siteName, siteUrl } from "@/constants/site";
@@ -73,6 +74,7 @@ export default function RootLayout({ children }) {
         <CommerceProvider>
           <SiteHeader />
           <main className="flex-1">{children}</main>
+          <FloatingWhatsapp />
           <SiteFooter />
           <Analytics />
           <SpeedInsights />

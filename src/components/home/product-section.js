@@ -17,7 +17,7 @@ export async function ProductSection() {
       <div className="mx-auto w-full max-w-7xl">
         <SectionHeading
           eyebrow="Handpicked for occasions"
-          title="New Traditional Arrivals"
+          title="New Arrivals"
           description="Fresh pieces from the live catalogue, ready to add to your bag."
           action={{ label: "Shop all", href: "/shop" }}
         />

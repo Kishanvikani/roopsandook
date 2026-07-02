@@ -33,43 +33,59 @@ export function SiteHeader() {
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-brand-maroon/15 bg-brand-ivory/95 backdrop-blur">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <button
-            className="grid h-10 w-10 place-items-center rounded-sm text-brand-maroon transition-colors hover:bg-brand-maroon/10 md:hidden"
-            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={isMenuOpen}
-            aria-controls="mobile-navigation"
-            onClick={() => setIsMenuOpen((current) => !current)}
-          >
-            {isMenuOpen ? (
-              <X size={20} aria-hidden="true" />
-            ) : (
-              <Menu size={20} aria-hidden="true" />
-            )}
-          </button>
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-1 items-center justify-start">
+            <button
+              className="grid h-10 w-10 place-items-center rounded-sm text-brand-maroon transition-colors hover:bg-brand-maroon/10 md:hidden"
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-navigation"
+              onClick={() => setIsMenuOpen((current) => !current)}
+            >
+              {isMenuOpen ? (
+                <X size={20} aria-hidden="true" />
+              ) : (
+                <Menu size={20} aria-hidden="true" />
+              )}
+            </button>
 
-          <Link
-            href="/"
-            className="inline-flex items-center"
-            aria-label="Roop Sandook home"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            <BrandLogo variant="expanded" priority className="h-11" />
-          </Link>
+            <Link
+              href="/"
+              className="hidden items-center md:inline-flex"
+              aria-label="Roop Sandook home"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <BrandLogo variant="expanded" priority className="h-11" />
+            </Link>
+          </div>
 
-          <nav className="hidden items-center gap-7 md:flex" aria-label="Main">
-            {mainNavigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm font-medium text-brand-maroon/75 transition-colors hover:text-brand-maroon"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <div className="flex flex-1 items-center justify-center">
+            <Link
+              href="/"
+              className="inline-flex items-center md:hidden"
+              aria-label="Roop Sandook home"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <BrandLogo variant="expanded" priority className="h-11" />
+            </Link>
 
-          <div className="flex items-center gap-2">
+            <nav
+              className="hidden items-center justify-center gap-7 md:flex"
+              aria-label="Main"
+            >
+              {mainNavigation.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm font-medium text-brand-maroon/75 transition-colors hover:text-brand-maroon"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          <div className="flex flex-1 items-center justify-end gap-2">
             <Link
               href="/wishlist"
               className="relative grid h-10 w-10 cursor-pointer place-items-center rounded-sm text-brand-maroon transition-colors hover:bg-brand-maroon/10"
