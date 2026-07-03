@@ -15,7 +15,7 @@ export function CollectionCard({ collection, href }) {
             src={collection.image}
             alt={title}
             fill
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            sizes="(min-width: 1024px) 25vw, 50vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
@@ -25,7 +25,7 @@ export function CollectionCard({ collection, href }) {
         )}
       </div>
       <div className="p-4">
-        <h3 className="text-xl text-foreground">
+        <h3 className="truncate text-xl text-foreground">
           {title}
         </h3>
       </div>

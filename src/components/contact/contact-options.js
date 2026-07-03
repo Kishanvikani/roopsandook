@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   Mail,
   MapPin,
@@ -5,6 +6,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import contactImage from "@/assets/images/hero-image-2.png";
 import {
   contactDetails,
   formatIndianPhone,
@@ -47,10 +49,35 @@ const contactOptions = [
 export function ContactOptions() {
   return (
     <section className="px-4 py-14 sm:px-6 lg:px-8">
-      <div className="mx-auto grid w-full max-w-7xl gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {contactOptions.map((option) => (
-          <ContactOption key={option.title} option={option} />
-        ))}
+      <div className="mx-auto w-full max-w-7xl">
+        <div className="max-w-3xl">
+          <h2 className="font-display text-3xl font-semibold text-foreground sm:text-4xl">
+            Get in Touch
+          </h2>
+          <p className="mt-4 text-sm leading-7 text-muted-foreground">
+            For product inquiries, order updates, shipping assistance, or
+            general support, we're here to help. Reach out anytime, and we'll
+            respond within 24 business hours.
+          </p>
+        </div>
+      </div>
+
+      <div className="mx-auto mt-8 grid w-full max-w-7xl items-stretch gap-8 lg:grid-cols-[1fr_1.05fr]">
+        <div className="relative min-h-80 overflow-hidden bg-brand-ivory">
+          <Image
+            src={contactImage}
+            alt="Roop Sandook jewellery styling"
+            fill
+            sizes="(min-width: 1024px) 45vw, 100vw"
+            className="object-cover"
+          />
+        </div>
+
+        <div className="grid gap-4">
+          {contactOptions.map((option) => (
+            <ContactOption key={option.title} option={option} />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -59,15 +86,14 @@ export function ContactOptions() {
 function ContactOption({ option }) {
   const content = (
     <>
-      <option.icon className="text-brand-maroon" size={24} aria-hidden="true" />
-      <h2 className="font-display mt-5 text-xl font-semibold text-foreground">
-        {option.title}
-      </h2>
-      <p className="mt-2 text-sm font-semibold text-brand-maroon">
+      <div className="flex items-center gap-3">
+        <option.icon className="text-brand-maroon" size={24} aria-hidden="true" />
+        <h2 className="font-display text-xl font-semibold text-foreground">
+          {option.title}
+        </h2>
+      </div>
+      <p className="mt-3 text-sm font-semibold text-brand-maroon">
         {option.value}
-      </p>
-      <p className="mt-3 text-sm leading-6 text-muted-foreground">
-        {option.text}
       </p>
     </>
   );

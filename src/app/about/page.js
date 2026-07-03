@@ -1,7 +1,4 @@
 import { AboutHero } from "@/components/about/about-hero";
-import { StorySection } from "@/components/about/story-section";
-import { ValuesSection } from "@/components/about/values-section";
-import { ContactOptions } from "@/components/contact/contact-options";
 
 export const metadata = {
   title: "About",
@@ -16,9 +13,6 @@ export default function AboutPage() {
   return (
     <>
       <AboutHero />
-      <StorySection />
-      <ValuesSection />
-      <ContactOptions />
     </>
   );
 }

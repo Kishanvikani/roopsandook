@@ -1,4 +1,3 @@
-import { ContactHero } from "@/components/contact/contact-hero";
 import { ContactOptions } from "@/components/contact/contact-options";
 
 export const metadata = {
@@ -13,7 +12,6 @@ export const metadata = {
 export default function ContactPage() {
   return (
     <>
-      <ContactHero />
       <ContactOptions />
     </>
   );

@@ -80,7 +80,7 @@ export function ProductCard({
                 src={selectedImage.url}
                 alt={selectedImage.alt || product.name}
                 fill
-                sizes="(min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
+                sizes="(min-width: 1024px) 25vw, 50vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
               {product.badge ? (
@@ -114,7 +114,7 @@ export function ProductCard({
         {/* <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon/65">
           {product.category?.title || product.collections?.[0]?.title || "Jewellery"}
         </p> */}
-        <h3 className="text-md font-semibold leading-6 text-foreground">
+        <h3 className="text-md truncate font-semibold leading-6 text-foreground">
           <Link href={productHref}>{product.name}</Link>
         </h3>
         <div className="mt-2 flex items-center justify-between gap-3">

@@ -10,6 +10,9 @@ const staticRoutes = [
   "/faqs",
   "/shipping-policy",
   "/return-policy",
+  "/shipping-and-return",
+  "/privacy-policy",
+  "/terms-and-conditions",
 ];
 
 export default async function sitemap() {
