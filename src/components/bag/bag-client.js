@@ -199,29 +199,29 @@ function BagRow({ row, onMoveToWishlist, onQuantityChange, onRemove }) {
   const productHref = `/shop/${row.product.slug}?sku=${encodeURIComponent(row.variant.sku)}&from=/bag`;
 
   return (
-    <article className="grid grid-cols-[112px_1fr] grid-rows-[8.5rem_auto] gap-4 border border-border bg-background p-4 sm:grid-cols-[120px_1fr_auto] sm:grid-rows-none sm:items-stretch">
+    <article className="grid grid-cols-[112px_1fr] gap-4 border border-border bg-background p-4 sm:grid-cols-[140px_1fr] sm:items-stretch">
       <Link
         href={productHref}
-        className="block h-full min-h-28 sm:min-h-32"
+        className="block h-full min-h-40"
         aria-label={`View ${row.product.name}`}
       >
         {image?.url ? (
-          <div className="relative h-full min-h-28 overflow-hidden bg-brand-ivory sm:min-h-32">
+          <div className="relative h-full min-h-40 overflow-hidden bg-brand-ivory">
             <Image
               src={image.url}
               alt={image.alt || row.product.name}
               fill
-              sizes="120px"
+              sizes="140px"
               className="object-contain transition-transform hover:scale-105"
             />
           </div>
         ) : (
-          <div className="h-full min-h-28 overflow-hidden sm:min-h-32">
+          <div className="h-full min-h-40 overflow-hidden">
             <JewelleryPlaceholder type="earrings" />
           </div>
         )}
       </Link>
-      <div className="col-span-2 row-start-2 text-left sm:col-span-1 sm:row-start-auto sm:block">
+      <div className="flex min-w-0 flex-col justify-between gap-4 text-left">
         <div>
           <h2 className="text-sm font-semibold text-foreground">
             <Link href={productHref} className="hover:text-brand-maroon">
@@ -232,72 +232,53 @@ function BagRow({ row, onMoveToWishlist, onQuantityChange, onRemove }) {
             Colour: {row.variant.colour?.title || "Default"}
           </p>
         </div>
-        <div className="hidden shrink-0 gap-2 sm:mt-3 sm:flex sm:flex-wrap">
-          <button
-            type="button"
-            onClick={onMoveToWishlist}
-            className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-border text-brand-maroon transition-colors hover:border-brand-maroon sm:w-auto sm:gap-2 sm:px-3 sm:text-xs sm:font-semibold"
-            aria-label={`Move ${row.product.name} to wishlist`}
-          >
-            <Heart size={14} aria-hidden="true" />
-            <span className="hidden sm:inline">Move to wishlist</span>
-          </button>
-          <button
-            type="button"
-            onClick={onRemove}
-            className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:border-brand-maroon hover:text-brand-maroon sm:w-auto sm:gap-2 sm:px-3 sm:text-xs sm:font-semibold"
-            aria-label={`Remove ${row.product.name}`}
-          >
-            <Trash2 size={14} aria-hidden="true" />
-            <span className="hidden sm:inline">Remove</span>
-          </button>
+        <div className="flex items-end justify-between gap-3">
+          <div className="flex shrink-0 gap-2 sm:flex-wrap">
+            <button
+              type="button"
+              onClick={onMoveToWishlist}
+              className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-border text-brand-maroon transition-colors hover:border-brand-maroon sm:w-auto sm:gap-2 sm:px-3 sm:text-xs sm:font-semibold"
+              aria-label={`Move ${row.product.name} to wishlist`}
+            >
+              <Heart size={14} aria-hidden="true" />
+              <span className="hidden sm:inline">Move to wishlist</span>
+            </button>
+            <button
+              type="button"
+              onClick={onRemove}
+              className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:border-brand-maroon hover:text-brand-maroon sm:w-auto sm:gap-2 sm:px-3 sm:text-xs sm:font-semibold"
+              aria-label={`Remove ${row.product.name}`}
+            >
+              <Trash2 size={14} aria-hidden="true" />
+              <span className="hidden sm:inline">Remove</span>
+            </button>
+          </div>
+          <div className="flex flex-col items-end gap-2 text-right text-sm font-semibold text-brand-maroon">
+            <p>{formatPrice(lineTotal)}</p>
+            <div className="inline-flex items-center border border-border">
+              <button
+                type="button"
+                onClick={() => onQuantityChange(quantity - 1)}
+                className="grid h-8 w-8 cursor-pointer place-items-center text-brand-maroon transition-colors hover:bg-brand-ivory"
+                aria-label={`Decrease quantity of ${row.product.name}`}
+              >
+                <Minus size={14} aria-hidden="true" />
+              </button>
+              <span className="grid h-8 min-w-9 place-items-center border-x border-border px-2 text-xs text-foreground">
+                {quantity}
+              </span>
+              <button
+                type="button"
+                onClick={() => onQuantityChange(quantity + 1)}
+                disabled={quantity >= stockLimit}
+                className="grid h-8 w-8 cursor-pointer place-items-center text-brand-maroon transition-colors hover:bg-brand-ivory"
+                aria-label={`Increase quantity of ${row.product.name}`}
+              >
+                <Plus size={14} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="col-start-2 row-start-1 flex h-full flex-col items-end justify-end gap-2 self-stretch text-right text-sm font-semibold text-brand-maroon sm:col-start-auto sm:row-start-auto sm:block">
-        <p>{formatPrice(lineTotal)}</p>
-        <div className="inline-flex items-center border border-border sm:mt-3">
-          <button
-            type="button"
-            onClick={() => onQuantityChange(quantity - 1)}
-            className="grid h-8 w-8 cursor-pointer place-items-center text-brand-maroon transition-colors hover:bg-brand-ivory"
-            aria-label={`Decrease quantity of ${row.product.name}`}
-          >
-            <Minus size={14} aria-hidden="true" />
-          </button>
-          <span className="grid h-8 min-w-9 place-items-center border-x border-border px-2 text-xs text-foreground">
-            {quantity}
-          </span>
-          <button
-            type="button"
-            onClick={() => onQuantityChange(quantity + 1)}
-            disabled={quantity >= stockLimit}
-            className="grid h-8 w-8 cursor-pointer place-items-center text-brand-maroon transition-colors hover:bg-brand-ivory"
-            aria-label={`Increase quantity of ${row.product.name}`}
-          >
-            <Plus size={14} aria-hidden="true" />
-          </button>
-        </div>
-        <p className="text-xs text-muted-foreground sm:mt-3">
-          Unit price {formatPrice(price)}
-        </p>
-      </div>
-      <div className="col-start-2 row-start-1 flex shrink-0 justify-end gap-2 self-start sm:hidden">
-        <button
-          type="button"
-          onClick={onMoveToWishlist}
-          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-border text-brand-maroon transition-colors hover:border-brand-maroon"
-          aria-label={`Move ${row.product.name} to wishlist`}
-        >
-          <Heart size={14} aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          onClick={onRemove}
-          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:border-brand-maroon hover:text-brand-maroon"
-          aria-label={`Remove ${row.product.name}`}
-        >
-          <Trash2 size={14} aria-hidden="true" />
-        </button>
       </div>
     </article>
   );
