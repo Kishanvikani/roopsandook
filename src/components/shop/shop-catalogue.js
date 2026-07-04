@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { SlidersHorizontal, X } from "lucide-react";
 
 import { ProductCard } from "@/components/product/product-card";
 import { formatPrice } from "@/services/catalogue";
@@ -30,6 +31,7 @@ export function ShopCatalogue({
   const [loadedProducts, setLoadedProducts] = useState(products);
   const [canLoadMore, setCanLoadMore] = useState(hasMore);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [loadError, setLoadError] = useState("");
   const loadMoreRef = useRef(null);
   const currentQuery = searchParams.toString();
@@ -131,6 +133,24 @@ export function ShopCatalogue({
 
     return () => observer.disconnect();
   }, [canLoadMore, isLoadingMore, isPending, currentQuery, loadedCount]);
+
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setIsFilterDrawerOpen(false);
+      }
+    }
+
+    if (isFilterDrawerOpen) {
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isFilterDrawerOpen]);
 
   function navigate(nextParams) {
     const query = nextParams.toString();
@@ -290,124 +310,45 @@ export function ShopCatalogue({
   return (
     <section className="px-4 py-12 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,4fr)]">
-        <aside className="border border-border bg-background p-5 lg:sticky lg:top-24 lg:self-start">
-          <h2 className="text-xl font-semibold text-brand-maroon">Filters</h2>
-
-          <div className="mt-5 space-y-4">
-            <FilterAccordion title="Category" defaultOpen>
-              <CheckboxGroup
-                name="parentCategory"
-                items={parentCategories}
-                selected={selectedParentCategories}
-                onToggle={toggleParam}
-              />
-            </FilterAccordion>
-            <FilterAccordion title="Sub-Category">
-              {selectedParentCategories.length === 0 ? (
-                <p className="text-sm leading-6 text-muted-foreground">
-                  Select a category for sub-category to appear.
-                </p>
-              ) : childCategories.length ? (
-                <CheckboxGroup
-                  name="category"
-                  items={childCategories}
-                  selected={uiFilters.category}
-                  onToggle={toggleParam}
-                />
-              ) : (
-                <p className="text-sm leading-6 text-muted-foreground">
-                  No sub-category for selected category.
-                </p>
-              )}
-            </FilterAccordion>
-            <FilterAccordion title="Colours">
-              <CheckboxGroup
-                name="colour"
-                items={colours}
-                selected={uiFilters.colour}
-                onToggle={toggleParam}
-                colourSwatches
-              />
-            </FilterAccordion>
-            <FilterAccordion title="Materials">
-              <CheckboxGroup
-                name="material"
-                items={materials}
-                selected={uiFilters.material}
-                onToggle={toggleParam}
-              />
-            </FilterAccordion>
-            <FilterAccordion title="Price" defaultOpen>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="grid gap-1.5 text-xs font-semibold text-brand-maroon/75">
-                  Min
-                  <input
-                    type="number"
-                    min={minPrice}
-                    max={maxPrice}
-                    step="50"
-                    value={priceValues.min}
-                    onChange={(event) =>
-                      setPriceValues((current) => ({
-                        ...current,
-                        min: event.target.value,
-                      }))
-                    }
-                    className="h-11 w-full rounded-sm border border-border bg-background px-3 text-sm font-normal text-foreground outline-none transition-colors focus:border-brand-maroon"
-                  />
-                </label>
-                <label className="grid gap-1.5 text-xs font-semibold text-brand-maroon/75">
-                  Max
-                  <input
-                    type="number"
-                    min={minPrice}
-                    max={maxPrice}
-                    step="50"
-                    value={priceValues.max}
-                    onChange={(event) =>
-                      setPriceValues((current) => ({
-                        ...current,
-                        max: event.target.value,
-                      }))
-                    }
-                    className="h-11 w-full rounded-sm border border-border bg-background px-3 text-sm font-normal text-foreground outline-none transition-colors focus:border-brand-maroon"
-                  />
-                </label>
-              </div>
-            </FilterAccordion>
-            <FilterAccordion title="Availability">
-              <div className="grid gap-3">
-                <AvailabilityCheckbox
-                  value="in-stock"
-                  label="In stock"
-                  checked={uiFilters.availability.includes("in-stock")}
-                  onToggle={toggleAvailability}
-                />
-                <AvailabilityCheckbox
-                  value="sold-out"
-                  label="Out of stock"
-                  checked={uiFilters.availability.includes("sold-out")}
-                  onToggle={toggleAvailability}
-                />
-              </div>
-            </FilterAccordion>
-          </div>
+        <aside className="hidden border border-border bg-background p-5 lg:sticky lg:top-24 lg:block lg:self-start">
+          <ShopFilters
+            childCategories={childCategories}
+            colours={colours}
+            materials={materials}
+            parentCategories={parentCategories}
+            priceValues={priceValues}
+            selectedParentCategories={selectedParentCategories}
+            setPriceValues={setPriceValues}
+            toggleAvailability={toggleAvailability}
+            toggleParam={toggleParam}
+            uiFilters={uiFilters}
+            idPrefix="desktop"
+          />
         </aside>
 
         <div className="relative">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-between gap-4">
             <h1 className="font-display text-3xl font-semibold text-brand-maroon">
               Traditional Jewellery
             </h1>
-            <div className="flex w-full items-center gap-3 sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setIsFilterDrawerOpen(true)}
+              className="inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-sm border border-brand-maroon px-3 text-xs font-semibold uppercase tracking-wide text-brand-maroon transition-colors hover:bg-brand-maroon hover:text-brand-ivory lg:hidden"
+              aria-label="Open filters and sorting"
+            >
+              <SlidersHorizontal size={16} aria-hidden="true" />
+              Filter
+            </button>
+            <div className="hidden w-full items-center gap-3 sm:w-auto lg:flex">
               <label
-                htmlFor="sort"
+                htmlFor="desktop-sort"
                 className="shrink-0 text-sm font-semibold text-brand-maroon"
               >
                 Sort By
               </label>
               <select
-                id="sort"
+                id="desktop-sort"
                 value={uiFilters.sort}
                 onChange={(event) => setParam("sort", event.target.value)}
                 className="h-10 w-full cursor-pointer rounded-sm border border-border bg-background px-3 pr-9 text-sm text-foreground outline-none transition-colors focus:border-brand-maroon sm:w-44"
@@ -421,25 +362,12 @@ export function ShopCatalogue({
           </div>
 
           {activeChips.length ? (
-            <div className="mt-6 flex flex-wrap gap-2">
-              {activeChips.map((chip) => (
-                <button
-                  key={`${chip.name}-${chip.value || chip.label}`}
-                  type="button"
-                  onClick={() => removeChip(chip)}
-                  className="cursor-pointer rounded-sm border border-border px-3 py-2 text-xs font-semibold text-brand-maroon transition-colors hover:border-brand-maroon"
-                >
-                  {chip.label} x
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="cursor-pointer rounded-sm bg-brand-ivory px-3 py-2 text-xs font-semibold text-brand-maroon transition-colors hover:bg-brand-ivory/70"
-              >
-                Reset all
-              </button>
-            </div>
+            <ActiveChips
+              activeChips={activeChips}
+              className="mt-6 hidden lg:flex"
+              onRemove={removeChip}
+              onReset={resetFilters}
+            />
           ) : null}
 
           <div className="relative">
@@ -501,7 +429,258 @@ export function ShopCatalogue({
           </div>
         </div>
       </div>
+
+      {isFilterDrawerOpen ? (
+        <div
+          className="fixed inset-0 z-50 lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Filters and sorting"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-brand-maroon/45"
+            aria-label="Close filters"
+            onClick={() => setIsFilterDrawerOpen(false)}
+          />
+          <aside className="absolute right-0 top-0 flex h-full w-[min(88vw,24rem)] flex-col bg-background shadow-2xl">
+            <div className="flex h-16 items-center justify-between border-b border-border px-5">
+              <h2 className="text-xl font-semibold text-brand-maroon">
+                Filters
+              </h2>
+              <button
+                type="button"
+                onClick={() => setIsFilterDrawerOpen(false)}
+                className="grid h-10 w-10 cursor-pointer place-items-center rounded-sm text-brand-maroon transition-colors hover:bg-brand-maroon/10"
+                aria-label="Close filters"
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-5">
+              <div>
+                <label
+                  htmlFor="mobile-sort"
+                  className="text-sm font-semibold text-brand-maroon"
+                >
+                  Sort By
+                </label>
+                <select
+                  id="mobile-sort"
+                  value={uiFilters.sort}
+                  onChange={(event) => setParam("sort", event.target.value)}
+                  className="mt-2 h-10 w-full cursor-pointer rounded-sm border border-border bg-background px-3 pr-9 text-sm text-foreground outline-none transition-colors focus:border-brand-maroon"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="price-asc">Price: low to high</option>
+                  <option value="price-desc">Price: high to low</option>
+                  <option value="name-asc">Name: A to Z</option>
+                </select>
+              </div>
+
+              <ActiveChips
+                activeChips={activeChips}
+                className="mt-5 flex"
+                onRemove={removeChip}
+                onReset={resetFilters}
+                showReset
+              />
+
+              <div className="mt-5">
+                <ShopFilters
+                  childCategories={childCategories}
+                  colours={colours}
+                  materials={materials}
+                  parentCategories={parentCategories}
+                  priceValues={priceValues}
+                  selectedParentCategories={selectedParentCategories}
+                  setPriceValues={setPriceValues}
+                  toggleAvailability={toggleAvailability}
+                  toggleParam={toggleParam}
+                  uiFilters={uiFilters}
+                  idPrefix="mobile"
+                  hideTitle
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-border p-5">
+              <button
+                type="button"
+                onClick={() => setIsFilterDrawerOpen(false)}
+                className="grid h-11 w-full cursor-pointer place-items-center rounded-sm bg-brand-maroon text-xs font-semibold uppercase tracking-wide text-brand-ivory transition-colors hover:bg-brand-maroon/90"
+              >
+                Show products
+              </button>
+            </div>
+          </aside>
+        </div>
+      ) : null}
     </section>
+  );
+}
+
+function ShopFilters({
+  childCategories,
+  colours,
+  idPrefix,
+  hideTitle = false,
+  materials,
+  parentCategories,
+  priceValues,
+  selectedParentCategories,
+  setPriceValues,
+  toggleAvailability,
+  toggleParam,
+  uiFilters,
+}) {
+  return (
+    <>
+      {hideTitle ? null : (
+        <h2 className="text-xl font-semibold text-brand-maroon">Filters</h2>
+      )}
+
+      <div className={hideTitle ? "space-y-4" : "mt-5 space-y-4"}>
+        <FilterAccordion title="Category" defaultOpen>
+          <CheckboxGroup
+            name="parentCategory"
+            items={parentCategories}
+            selected={selectedParentCategories}
+            onToggle={toggleParam}
+            idPrefix={idPrefix}
+          />
+        </FilterAccordion>
+        <FilterAccordion title="Sub-Category">
+          {selectedParentCategories.length === 0 ? (
+            <p className="text-sm leading-6 text-muted-foreground">
+              Select a category for sub-category to appear.
+            </p>
+          ) : childCategories.length ? (
+            <CheckboxGroup
+              name="category"
+              items={childCategories}
+              selected={uiFilters.category}
+              onToggle={toggleParam}
+              idPrefix={idPrefix}
+            />
+          ) : (
+            <p className="text-sm leading-6 text-muted-foreground">
+              No sub-category for selected category.
+            </p>
+          )}
+        </FilterAccordion>
+        <FilterAccordion title="Colours">
+          <CheckboxGroup
+            name="colour"
+            items={colours}
+            selected={uiFilters.colour}
+            onToggle={toggleParam}
+            colourSwatches
+            idPrefix={idPrefix}
+          />
+        </FilterAccordion>
+        <FilterAccordion title="Materials">
+          <CheckboxGroup
+            name="material"
+            items={materials}
+            selected={uiFilters.material}
+            onToggle={toggleParam}
+            idPrefix={idPrefix}
+          />
+        </FilterAccordion>
+        <FilterAccordion title="Price" defaultOpen>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="grid gap-1.5 text-xs font-semibold text-brand-maroon/75">
+              Min
+              <input
+                type="number"
+                min={minPrice}
+                max={maxPrice}
+                step="50"
+                value={priceValues.min}
+                onChange={(event) =>
+                  setPriceValues((current) => ({
+                    ...current,
+                    min: event.target.value,
+                  }))
+                }
+                className="h-11 w-full rounded-sm border border-border bg-background px-3 text-sm font-normal text-foreground outline-none transition-colors focus:border-brand-maroon"
+              />
+            </label>
+            <label className="grid gap-1.5 text-xs font-semibold text-brand-maroon/75">
+              Max
+              <input
+                type="number"
+                min={minPrice}
+                max={maxPrice}
+                step="50"
+                value={priceValues.max}
+                onChange={(event) =>
+                  setPriceValues((current) => ({
+                    ...current,
+                    max: event.target.value,
+                  }))
+                }
+                className="h-11 w-full rounded-sm border border-border bg-background px-3 text-sm font-normal text-foreground outline-none transition-colors focus:border-brand-maroon"
+              />
+            </label>
+          </div>
+        </FilterAccordion>
+        <FilterAccordion title="Availability">
+          <div className="grid gap-3">
+            <AvailabilityCheckbox
+              value="in-stock"
+              label="In stock"
+              checked={uiFilters.availability.includes("in-stock")}
+              onToggle={toggleAvailability}
+              idPrefix={idPrefix}
+            />
+            <AvailabilityCheckbox
+              value="sold-out"
+              label="Out of stock"
+              checked={uiFilters.availability.includes("sold-out")}
+              onToggle={toggleAvailability}
+              idPrefix={idPrefix}
+            />
+          </div>
+        </FilterAccordion>
+      </div>
+    </>
+  );
+}
+
+function ActiveChips({
+  activeChips,
+  className,
+  onRemove,
+  onReset,
+  showReset = false,
+}) {
+  if (!activeChips.length && !showReset) {
+    return null;
+  }
+
+  return (
+    <div className={`flex-wrap gap-2 ${className}`}>
+      {activeChips.map((chip) => (
+        <button
+          key={`${chip.name}-${chip.value || chip.label}`}
+          type="button"
+          onClick={() => onRemove(chip)}
+          className="cursor-pointer rounded-sm border border-border px-3 py-2 text-xs font-semibold text-brand-maroon transition-colors hover:border-brand-maroon"
+        >
+          {chip.label} x
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={onReset}
+        className="cursor-pointer rounded-sm bg-brand-ivory px-3 py-2 text-xs font-semibold text-brand-maroon transition-colors hover:bg-brand-ivory/70"
+      >
+        Reset all
+      </button>
+    </div>
   );
 }
 
@@ -525,6 +704,7 @@ function CheckboxGroup({
   selected,
   onToggle,
   colourSwatches = false,
+  idPrefix,
 }) {
   if (!items.length) {
     return (
@@ -539,11 +719,11 @@ function CheckboxGroup({
       {items.map((item) => (
         <label
           key={item.slug}
-          htmlFor={`${name}-${item.slug}`}
+          htmlFor={`${idPrefix}-${name}-${item.slug}`}
           className="flex cursor-pointer items-center gap-3 text-sm text-foreground"
         >
           <input
-            id={`${name}-${item.slug}`}
+            id={`${idPrefix}-${name}-${item.slug}`}
             type="checkbox"
             value={item.slug}
             checked={selected.includes(item.slug)}
@@ -564,14 +744,14 @@ function CheckboxGroup({
   );
 }
 
-function AvailabilityCheckbox({ value, label, checked, onToggle }) {
+function AvailabilityCheckbox({ value, label, checked, onToggle, idPrefix }) {
   return (
     <label
-      htmlFor={`availability-${value}`}
+      htmlFor={`${idPrefix}-availability-${value}`}
       className="flex cursor-pointer items-center gap-3 text-sm text-foreground"
     >
       <input
-        id={`availability-${value}`}
+        id={`${idPrefix}-availability-${value}`}
         type="checkbox"
         value={value}
         checked={checked}

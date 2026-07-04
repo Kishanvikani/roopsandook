@@ -1,7 +1,12 @@
 import Link from "next/link";
 
 import { BrandLogo } from "@/components/common/brand-logo";
-import { contactDetails, getInstagramUrl } from "@/lib/contact";
+import {
+  contactDetails,
+  formatIndianPhone,
+  getInstagramUrl,
+  getWhatsappUrl,
+} from "@/lib/contact";
 import { getParentCategoriesWithProductCounts } from "@/services/catalogue";
 
 const quickLinks = [
@@ -71,6 +76,24 @@ export async function SiteFooter() {
             >
               <InstagramIcon />
               <span>@{contactDetails.instagramHandle}</span>
+            </Link>
+            <Link
+              href={getWhatsappUrl()}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-brand-ivory/75 hover:text-brand-ivory"
+              aria-label="Chat with Roop Sandook on WhatsApp"
+            >
+              <span aria-hidden="true">WA</span>
+              <span>{formatIndianPhone()}</span>
+            </Link>
+            <Link
+              href={`mailto:${contactDetails.email}`}
+              className="inline-flex items-center gap-2 text-sm text-brand-ivory/75 hover:text-brand-ivory"
+              aria-label={`Email ${contactDetails.email}`}
+            >
+              <span aria-hidden="true">@</span>
+              <span>{contactDetails.email}</span>
             </Link>
           </div>
         </div>

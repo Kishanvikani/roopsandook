@@ -51,15 +51,9 @@ export function WishlistClient({ products }) {
       <div className="mx-auto w-full max-w-7xl">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-maroon">
-              Wishlist
-            </p>
-            <h1 className="font-display mt-3 text-4xl font-semibold text-foreground">
+            <h1 className="font-display text-4xl font-semibold text-foreground">
               Saved Pieces
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Each saved item keeps the colour variant you selected.
-            </p>
           </div>
           <Link
             href="/shop"
@@ -95,7 +89,7 @@ export function WishlistClient({ products }) {
         ) : null}
 
         {liveItems.length ? (
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-5">
             {liveItems.map(({ item, product }) => (
               <ProductCard
                 key={`${item.productId}-${item.sku}`}

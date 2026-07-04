@@ -2,9 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { City, State } from "country-state-city";
 import { Heart, Minus, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 import { useCommerce } from "@/components/commerce/commerce-provider";
 import { JewelleryPlaceholder } from "@/components/product/jewellery-placeholder";
@@ -12,9 +11,6 @@ import { formatPrice } from "@/services/catalogue";
 
 const freeShippingThreshold = 1299;
 const shippingCharge = 99;
-const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "910000000000";
-const countryCode = "IN";
-const customCityValue = "__custom";
 
 export function BagClient({ products }) {
   const {
@@ -23,31 +19,9 @@ export function BagClient({ products }) {
     toggleWishlist,
     updateBagQuantity,
   } = useCommerce();
-  const [customer, setCustomer] = useState({
-    name: "",
-    addressLine: "",
-    pinCode: "",
-    stateCode: "MH",
-    city: "Mumbai",
-    customCity: "",
-    note: "",
-  });
-  const [hasOrdered, setHasOrdered] = useState(false);
   const productMap = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
     [products],
-  );
-  const states = useMemo(() => State.getStatesOfCountry(countryCode), []);
-  const cityOptions = useMemo(
-    () =>
-      City.getCitiesOfState(countryCode, customer.stateCode)
-        .map((city) => city.name)
-        .filter((city, index, cities) => cities.indexOf(city) === index)
-        .sort((a, b) => a.localeCompare(b)),
-    [customer.stateCode],
-  );
-  const selectedState = states.find(
-    (state) => state.isoCode === customer.stateCode,
   );
   const rows = useMemo(
     () =>
@@ -97,37 +71,6 @@ export function BagClient({ products }) {
   const shipping = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : shippingCharge;
   const total = subtotal + shipping;
   const amountForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
-  const canCheckout =
-    rows.length > 0 &&
-    customer.name.trim() &&
-    customer.addressLine.trim() &&
-    isValidPinCode(customer.pinCode) &&
-    selectedState &&
-    getCity(customer).trim();
-
-  function updateCustomer(field, value) {
-    setCustomer((current) => {
-      if (field === "pinCode") {
-        return { ...current, pinCode: cleanPinCode(value) };
-      }
-
-      if (field === "stateCode") {
-        const nextCities = City.getCitiesOfState(countryCode, value)
-          .map((city) => city.name)
-          .filter((city, index, cities) => cities.indexOf(city) === index)
-          .sort((a, b) => a.localeCompare(b));
-
-        return {
-          ...current,
-          stateCode: value,
-          city: nextCities[0] || customCityValue,
-          customCity: "",
-        };
-      }
-
-      return { ...current, [field]: value };
-    });
-  }
 
   function moveToWishlist(row) {
     toggleWishlist({
@@ -138,79 +81,11 @@ export function BagClient({ products }) {
     removeFromBag(row.product.id, row.variant.sku);
   }
 
-  function createWhatsAppHref() {
-    const lines = [
-      "*Hello Roop Sandook,*",
-      "I would like to place this order:",
-      "",
-      "*Selected pieces*",
-      ...rows.flatMap((row, index) => {
-        const quantity = Math.min(row.item.quantity, getStockLimit(row));
-        const price = row.variant.price || row.product.price || 0;
-
-        return [
-          `- *${index + 1}. ${row.product.name}*`,
-          `  SKU: ${row.variant.sku}`,
-          `  Colour: ${row.variant.colour?.title || "Default"}`,
-          `  Qty: ${quantity}`,
-          `  Line total: ${formatPrice(price * quantity)}`,
-          `  Unit price: ${formatPrice(price)}`,
-          "",
-        ];
-      }),
-      "*Bill summary*",
-      `- Subtotal: ${formatPrice(subtotal)}`,
-      `- Shipping: ${shipping === 0 ? "Free" : formatPrice(shipping)}`,
-      `- *Total: ${formatPrice(total)}*`,
-      "",
-      "*Shipping details*",
-      `- Name: ${customer.name.trim()}`,
-      `- Address: ${customer.addressLine.trim()}`,
-      `- PIN code: ${customer.pinCode.trim()}`,
-      `- State: ${selectedState?.name || customer.stateCode}`,
-      `- City: ${getCity(customer).trim()}`,
-      customer.note.trim() ? `- Note: ${customer.note.trim()}` : null,
-      "",
-      "Please confirm availability, payment details, and shipping timeline.",
-    ];
-
-    return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.filter(Boolean).join("\n"))}`;
-  }
-
-  if (hasOrdered) {
-    return (
-      <section className="px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl border border-border bg-brand-ivory p-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-maroon">
-            Order shared
-          </p>
-          <h1 className="font-display mt-3 text-4xl font-semibold text-brand-maroon">
-            Thank you for shopping with us
-          </h1>
-          <p className="mt-4 text-sm leading-7 text-brand-maroon/75">
-            We are excited to prepare your Roop Sandook pieces with care. Our
-            team will review your WhatsApp order, confirm availability, and help
-            you complete the next steps warmly and personally.
-          </p>
-          <Link
-            href="/shop"
-            className="mt-6 inline-grid h-11 place-items-center rounded-sm bg-brand-maroon px-5 text-xs font-semibold uppercase tracking-wide text-brand-ivory transition-colors hover:bg-brand-maroon/90"
-          >
-            Continue shopping
-          </Link>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section className="px-4 py-14 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[1fr_380px]">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-maroon">
-            Your bag
-          </p>
-          <h1 className="font-display mt-3 text-4xl font-semibold text-foreground">
+          <h1 className="font-display text-4xl font-semibold text-foreground">
             Review Your Pieces
           </h1>
 
@@ -250,79 +125,36 @@ export function BagClient({ products }) {
             </div>
           )}
 
-          <div className="mt-8 grid gap-4 bg-brand-ivory p-5 text-sm leading-6 text-brand-maroon/75 sm:grid-cols-3">
-            <InfoBlock title="Care" text="Keep jewellery away from water, perfume, and direct sprays. Store each piece separately in a dry pouch." />
-            <InfoBlock title="Shipping" text="Most ready pieces ship after WhatsApp confirmation and payment details are completed." />
-            <InfoBlock title="Free shipping" text="Orders above Rs. 1,299 ship free. Smaller orders include a Rs. 99 shipping charge." />
+          <div className="mt-8 grid gap-4 bg-brand-ivory p-5 text-sm leading-6 text-brand-maroon/75">
+            <InfoBlock
+              title="Care"
+              text="A Little Care Goes a Long Way ✨ Keep your jewellery away from water and perfume, and store it in a plastic pouch after use. With a little love and care, your jewellery will stay beautiful and can be worn for a long time."
+            />
+            <InfoBlock
+              title="Shipping"
+              text="Most ready pieces ship after WhatsApp confirmation and payment details are completed. Once placed, your order will be delivered within 7-10 days."
+            />
+            <InfoBlock
+              title="Free Shipping"
+              text="Orders above Rs. 1,299 ship free. Smaller orders include a Rs. 99 shipping charge."
+            />
+            <InfoBlock
+              title="Exchange & Return"
+              text="Please read the exchange and return section before placing your order."
+              href="/shipping-and-return"
+            />
+            <InfoBlock
+              title="Payment"
+              text="Payment will be completed by bank transfer or GPay after WhatsApp confirmation."
+            />
           </div>
         </div>
 
-        <aside className="border border-border bg-background p-5 lg:sticky lg:top-24 lg:self-start">
+        <aside className="border border-border bg-background p-5 lg:sticky lg:top-24 lg:mt-[4.5rem] lg:self-start">
           <h2 className="text-sm font-semibold text-brand-maroon">
-            Shipping Details
+            Order Summary
           </h2>
-          <div className="mt-5 grid gap-4">
-            <Field
-              label="Name"
-              value={customer.name}
-              onChange={(value) => updateCustomer("name", value)}
-              required
-            />
-            <Field
-              label="Address"
-              value={customer.addressLine}
-              onChange={(value) => updateCustomer("addressLine", value)}
-              multiline
-              required
-            />
-            <Field
-              label="PIN code"
-              value={customer.pinCode}
-              onChange={(value) => updateCustomer("pinCode", value)}
-              inputMode="numeric"
-              maxLength={6}
-              pattern="[0-9]{6}"
-              required
-            />
-            <SelectField
-              label="State"
-              value={customer.stateCode}
-              onChange={(value) => updateCustomer("stateCode", value)}
-              options={states.map((state) => ({
-                label: state.name,
-                value: state.isoCode,
-              }))}
-              required
-            />
-            <SelectField
-              label="City"
-              value={customer.city}
-              onChange={(value) => updateCustomer("city", value)}
-              options={[
-                ...cityOptions.map((city) => ({ label: city, value: city })),
-                { label: "Other city", value: customCityValue },
-              ]}
-              optionLabels={{ [customCityValue]: "Other city" }}
-              required
-            />
-            {customer.city === customCityValue ? (
-              <Field
-                label="City name"
-                value={customer.customCity}
-                onChange={(value) => updateCustomer("customCity", value)}
-                required
-              />
-            ) : null}
-            <Field
-              label="Order note"
-              value={customer.note}
-              onChange={(value) => updateCustomer("note", value)}
-              multiline
-              optional
-            />
-          </div>
-
-          <div className="mt-6 border-y border-border py-5 text-sm">
+          <div className="mt-5 border-y border-border py-5 text-sm">
             <SummaryLine label="Subtotal" value={formatPrice(subtotal)} />
             <SummaryLine
               label="Shipping"
@@ -335,10 +167,10 @@ export function BagClient({ products }) {
             />
           </div>
           {subtotal > 0 ? (
-            <p className="mt-4 text-sm leading-6 text-muted-foreground">
+            <p className="mt-4 border border-brand-maroon/20 bg-brand-ivory px-4 py-3 text-sm font-semibold leading-6 text-brand-maroon">
               {shipping === 0
-                ? `You saved ${formatPrice(shippingCharge)} on shipping.`
-                : `Add items worth ${formatPrice(amountForFreeShipping)} more for free shipping.`}
+                ? `✨ You saved ${formatPrice(shippingCharge)} on shipping.`
+                : `✨ Add items worth ${formatPrice(amountForFreeShipping)} more for free shipping.`}
             </p>
           ) : null}
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
@@ -346,25 +178,12 @@ export function BagClient({ products }) {
             on WhatsApp before dispatch.
           </p>
 
-          <a
-            href={canCheckout ? createWhatsAppHref() : undefined}
-            target="_blank"
-            rel="noreferrer"
-            onClick={(event) => {
-              if (!canCheckout) {
-                event.preventDefault();
-                return;
-              }
-              setHasOrdered(true);
-            }}
-            className={`mt-5 grid h-12 place-items-center rounded-sm text-xs font-semibold uppercase tracking-wide transition-colors ${
-              canCheckout
-                ? "bg-brand-maroon text-brand-ivory hover:bg-brand-maroon/90"
-                : "cursor-not-allowed bg-muted-foreground text-background"
-            }`}
+          <Link
+            href={rows.length ? "/checkout" : "/shop"}
+            className="mt-5 grid h-12 place-items-center rounded-sm bg-brand-maroon text-xs font-semibold uppercase tracking-wide text-brand-ivory transition-colors hover:bg-brand-maroon/90"
           >
-            Order on WhatsApp
-          </a>
+            {rows.length ? "Proceed to checkout" : "Browse jewellery"}
+          </Link>
         </aside>
       </div>
     </section>
@@ -380,36 +199,34 @@ function BagRow({ row, onMoveToWishlist, onQuantityChange, onRemove }) {
   const productHref = `/shop/${row.product.slug}?sku=${encodeURIComponent(row.variant.sku)}&from=/bag`;
 
   return (
-    <article className="grid gap-4 border border-border bg-background p-4 sm:grid-cols-[96px_1fr_auto]">
-      <Link href={productHref} className="block" aria-label={`View ${row.product.name}`}>
+    <article className="grid gap-4 border border-border bg-background p-4 sm:grid-cols-[120px_1fr_auto] sm:items-stretch">
+      <Link
+        href={productHref}
+        className="block h-full min-h-32"
+        aria-label={`View ${row.product.name}`}
+      >
         {image?.url ? (
-          <div className="relative aspect-square overflow-hidden bg-brand-ivory">
+          <div className="relative h-full min-h-32 overflow-hidden bg-brand-ivory">
             <Image
               src={image.url}
               alt={image.alt || row.product.name}
               fill
-              sizes="96px"
-              className="object-cover transition-transform hover:scale-105"
+              sizes="120px"
+              className="object-contain transition-transform hover:scale-105"
             />
           </div>
         ) : (
-          <div className="aspect-square overflow-hidden">
+          <div className="h-full min-h-32 overflow-hidden">
             <JewelleryPlaceholder type="earrings" />
           </div>
         )}
       </Link>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon/65">
-          {row.product.category?.title || "Jewellery"}
-        </p>
-        <h2 className="mt-2 text-sm font-semibold text-foreground">
+        <h2 className="text-sm font-semibold text-foreground">
           <Link href={productHref} className="hover:text-brand-maroon">
             {row.product.name}
           </Link>
         </h2>
-        <p className="mt-2 text-xs text-muted-foreground">
-          SKU: {row.variant.sku}
-        </p>
         <p className="mt-1 text-xs text-muted-foreground">
           Colour: {row.variant.colour?.title || "Default"}
         </p>
@@ -459,89 +276,8 @@ function BagRow({ row, onMoveToWishlist, onQuantityChange, onRemove }) {
         <p className="mt-3 text-xs text-muted-foreground">
           Unit price {formatPrice(price)}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {stockLimit} in stock
-        </p>
       </div>
     </article>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  multiline = false,
-  optional = false,
-  required = false,
-  inputMode,
-  maxLength,
-  pattern,
-}) {
-  const className =
-    "mt-2 w-full rounded-sm border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand-maroon";
-
-  return (
-    <label className="text-sm font-semibold text-brand-maroon">
-      {label}
-      {required ? <span className="text-brand-maroon"> *</span> : null}
-      {optional ? (
-        <span className="ml-2 text-xs font-normal text-muted-foreground">
-          Optional
-        </span>
-      ) : null}
-      {multiline ? (
-        <textarea
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          required={required}
-          rows={4}
-          className={`${className} py-3`}
-        />
-      ) : (
-        <input
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          required={required}
-          inputMode={inputMode}
-          maxLength={maxLength}
-          pattern={pattern}
-          className={`${className} h-11`}
-        />
-      )}
-    </label>
-  );
-}
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-  required = false,
-}) {
-  return (
-    <label className="text-sm font-semibold text-brand-maroon">
-      {label}
-      {required ? <span className="text-brand-maroon"> *</span> : null}
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        required={required}
-        className="mt-2 h-11 w-full cursor-pointer rounded-sm border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-brand-maroon"
-      >
-        {options.map((option) => {
-          const normalized =
-            typeof option === "string" ? { label: option, value: option } : option;
-
-          return (
-          <option key={normalized.value} value={normalized.value}>
-            {normalized.label}
-          </option>
-          );
-        })}
-      </select>
-    </label>
   );
 }
 
@@ -558,27 +294,23 @@ function SummaryLine({ label, value, strong = false }) {
   );
 }
 
-function InfoBlock({ title, text }) {
+function InfoBlock({ title, text, href }) {
   return (
-    <div>
+    <div className="border-b border-brand-maroon/10 pb-4 last:border-b-0 last:pb-0">
       <h2 className="text-sm font-semibold text-brand-maroon">{title}</h2>
       <p className="mt-2">{text}</p>
+      {href ? (
+        <Link
+          href={href}
+          className="mt-2 inline-flex text-xs font-semibold uppercase tracking-wide text-brand-maroon hover:text-brand-maroon/75"
+        >
+          Read policy
+        </Link>
+      ) : null}
     </div>
   );
 }
 
 function getStockLimit(row) {
   return row.variant.inventoryCount || row.product.totalInventory || 1;
-}
-
-function getCity(customer) {
-  return customer.city === customCityValue ? customer.customCity : customer.city;
-}
-
-function cleanPinCode(value) {
-  return value.replace(/\D/g, "").slice(0, 6);
-}
-
-function isValidPinCode(value) {
-  return /^\d{6}$/.test(value);
 }
