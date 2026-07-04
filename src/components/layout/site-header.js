@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Heart, Menu, ShoppingBag, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { BrandLogo } from "@/components/common/brand-logo";
@@ -9,6 +10,7 @@ import { useCommerce } from "@/components/commerce/commerce-provider";
 import { mainNavigation } from "@/constants/navigation";
 
 export function SiteHeader() {
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { bagCount, wishlistCount } = useCommerce();
 
@@ -73,15 +75,24 @@ export function SiteHeader() {
               className="hidden items-center justify-center gap-7 md:flex"
               aria-label="Main"
             >
-              {mainNavigation.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-sm font-medium text-brand-maroon/75 transition-colors hover:text-brand-maroon"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {mainNavigation.map((item) => {
+                const isActive = isActivePath(pathname, item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`border-b-2 py-1 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "border-brand-maroon text-brand-maroon"
+                        : "border-transparent text-brand-maroon/75 hover:text-brand-maroon"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 
@@ -135,22 +146,37 @@ export function SiteHeader() {
             </div>
 
             <nav className="grid gap-1 px-4 py-5" aria-label="Mobile">
-              {mainNavigation.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-sm px-3 py-4 text-base font-medium text-brand-maroon transition-colors hover:bg-brand-maroon/10"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {mainNavigation.map((item) => {
+                const isActive = isActivePath(pathname, item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`rounded-sm px-3 py-4 text-base font-medium text-brand-maroon transition-colors hover:bg-brand-maroon/10 ${
+                      isActive ? "bg-brand-maroon/10" : ""
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </nav>
           </aside>
         </div>
       ) : null}
     </>
   );
+}
+
+function isActivePath(pathname, href) {
+  if (href === "/") {
+    return pathname === "/";
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function HeaderCount({ value }) {

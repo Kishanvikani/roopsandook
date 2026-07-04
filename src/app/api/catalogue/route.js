@@ -8,6 +8,7 @@ import {
 } from "@/services/catalogue";
 
 const maxPrice = 3000;
+const minPrice = 0;
 
 export async function GET(request) {
   const params = request.nextUrl.searchParams;
@@ -18,7 +19,8 @@ export async function GET(request) {
     collection: params.getAll("collection"),
     colour: params.getAll("colour"),
     material: params.getAll("material"),
-    availability: params.get("availability") || "in-stock",
+    availability: params.getAll("availability"),
+    priceMin: params.get("priceMin") || String(minPrice),
     priceMax: params.get("priceMax") || String(maxPrice),
     sort: params.get("sort") || "newest",
   };

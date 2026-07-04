@@ -13,6 +13,7 @@ export function ProductCard({
   visualType = "necklace",
   listingHref = "/shop",
   initialSku,
+  compact = false,
 }) {
   const { addToBag, isWishlisted, toggleWishlist } = useCommerce();
   const variants = product.variants || [];
@@ -80,11 +81,21 @@ export function ProductCard({
                 src={selectedImage.url}
                 alt={selectedImage.alt || product.name}
                 fill
-                sizes="(min-width: 1024px) 25vw, 50vw"
+                sizes={
+                  compact
+                    ? "(min-width: 1024px) 18vw, (min-width: 768px) 28vw, 50vw"
+                    : "(min-width: 1024px) 25vw, 50vw"
+                }
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
               {product.badge ? (
-                <span className="absolute left-4 top-4 rounded-sm bg-brand-maroon px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-ivory">
+                <span
+                  className={`absolute rounded-sm bg-brand-maroon font-semibold uppercase tracking-wide text-brand-ivory ${
+                    compact
+                      ? "left-2 top-2 px-2 py-1 text-[10px]"
+                      : "left-4 top-4 px-3 py-1 text-xs"
+                  }`}
+                >
                   {product.badge}
                 </span>
               ) : null}
@@ -96,11 +107,13 @@ export function ProductCard({
         <button
           type="button"
           onClick={handleWishlist}
-          className={`absolute right-4 top-4 grid h-10 w-10 cursor-pointer place-items-center rounded-full shadow-sm transition-colors ${
+          className={`absolute grid cursor-pointer place-items-center rounded-full shadow-sm transition-colors ${
             wishlisted
               ? "bg-brand-maroon text-brand-ivory"
               : "bg-background/90 text-brand-maroon hover:bg-brand-maroon hover:text-brand-ivory"
-          } ${heartPulse ? "animate-pulse" : ""}`}
+          } ${compact ? "right-2 top-2 h-8 w-8" : "right-4 top-4 h-10 w-10"} ${
+            heartPulse ? "animate-pulse" : ""
+          }`}
           aria-label={`${wishlisted ? "Remove" : "Add"} ${product.name} ${selectedColour} ${wishlisted ? "from" : "to"} wishlist`}
         >
           <Heart
@@ -110,16 +123,24 @@ export function ProductCard({
           />
         </button>
       </div>
-      <div className="p-4">
+      <div className={compact ? "p-3" : "p-4"}>
         {/* <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon/65">
           {product.category?.title || product.collections?.[0]?.title || "Jewellery"}
         </p> */}
-        <h3 className="text-md truncate font-semibold leading-6 text-foreground">
+        <h3
+          className={`truncate font-semibold text-foreground ${
+            compact ? "text-sm leading-5" : "text-md leading-6"
+          }`}
+        >
           <Link href={productHref}>{product.name}</Link>
         </h3>
-        <div className="mt-2 flex items-center justify-between gap-3">
+        <div className="mt-2 flex items-center justify-between gap-2">
           <div>
-            <p className="text-sm font-semibold text-brand-maroon">
+            <p
+              className={`font-semibold text-brand-maroon ${
+                compact ? "text-xs" : "text-sm"
+              }`}
+            >
               {formatCardPrice(selectedPrice, product.priceLabel)}
             </p>
             {selectedCompareAtPrice ? (
@@ -128,12 +149,12 @@ export function ProductCard({
               </p>
             ) : null}
           </div>
-          <p className="text-right text-xs text-muted-foreground">
+          <p className="truncate text-right text-xs text-muted-foreground">
             {product.materials?.[0]?.title || product.material || "Ready to style"}
           </p>
         </div>
         {variantDots.length ? (
-          <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="mt-3 flex items-center justify-between gap-2">
             <span className="text-xs text-muted-foreground">
               {selectedColour}
             </span>
@@ -165,7 +186,9 @@ export function ProductCard({
           type="button"
           disabled={!selectedVariantAvailable}
           onClick={handleAddToBag}
-          className="mt-4 h-10 w-full cursor-pointer rounded-sm border border-brand-maroon text-xs font-semibold uppercase tracking-wide text-brand-maroon transition-colors hover:bg-brand-maroon hover:text-brand-ivory disabled:cursor-not-allowed disabled:border-muted-foreground disabled:text-muted-foreground disabled:hover:bg-transparent"
+          className={`mt-4 w-full cursor-pointer rounded-sm border border-brand-maroon text-xs font-semibold uppercase tracking-wide text-brand-maroon transition-colors hover:bg-brand-maroon hover:text-brand-ivory disabled:cursor-not-allowed disabled:border-muted-foreground disabled:text-muted-foreground disabled:hover:bg-transparent ${
+            compact ? "h-9" : "h-10"
+          }`}
         >
           {selectedVariantAvailable ? "Add to bag" : "Sold out"}
         </button>

@@ -338,7 +338,8 @@ export function filterProducts(products, filters) {
   const collections = toArray(filters.collection);
   const colours = toArray(filters.colour);
   const materials = toArray(filters.material);
-  const availability = filters.availability || "in-stock";
+  const availability = toArray(filters.availability);
+  const priceMin = parsePriceFilter(filters.priceMin);
   const priceMax = parsePriceFilter(filters.priceMax);
 
   return products
@@ -399,11 +400,29 @@ export function filterProducts(products, filters) {
         return false;
       }
 
-      if (availability === "in-stock" && !product.inStock) {
+      if (
+        availability.includes("none") ||
+        availability.length === 1 &&
+        availability.includes("in-stock") &&
+        !product.inStock
+      ) {
         return false;
       }
 
-      if (availability === "sold-out" && product.inStock) {
+      if (
+        !availability.includes("none") &&
+        availability.length === 1 &&
+        availability.includes("sold-out") &&
+        product.inStock
+      ) {
+        return false;
+      }
+
+      if (
+        priceMin != null &&
+        product.price != null &&
+        product.price < priceMin
+      ) {
         return false;
       }
 
@@ -452,7 +471,8 @@ function buildProductFilterQuery(filters = {}) {
   const collections = toArray(filters.collection);
   const colours = toArray(filters.colour);
   const materials = toArray(filters.material);
-  const availability = filters.availability || "in-stock";
+  const availability = toArray(filters.availability);
+  const priceMin = parsePriceFilter(filters.priceMin);
   const priceMax = parsePriceFilter(filters.priceMax);
   const conditions = [`_type == "product"`, `defined(slug.current)`];
   const params = {};
@@ -502,12 +522,24 @@ function buildProductFilterQuery(filters = {}) {
     params.materials = materials;
   }
 
-  if (availability === "in-stock") {
+  if (availability.includes("none")) {
+    conditions.push(`false`);
+  }
+
+  if (availability.length === 1 && availability.includes("in-stock")) {
     conditions.push(`count(variants[inventoryCount > 0 && inStock != false]) > 0`);
   }
 
-  if (availability === "sold-out") {
+  if (availability.length === 1 && availability.includes("sold-out")) {
     conditions.push(`count(variants[inventoryCount > 0 && inStock != false]) == 0`);
+  }
+
+  if (priceMin != null) {
+    conditions.push(`(
+      count(variants[defined(price)]) == 0 ||
+      count(variants[defined(price) && price >= $priceMin]) > 0
+    )`);
+    params.priceMin = priceMin;
   }
 
   if (priceMax != null) {

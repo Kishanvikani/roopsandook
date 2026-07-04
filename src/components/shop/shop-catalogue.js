@@ -3,16 +3,16 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { SectionHeading } from "@/components/common/section-heading";
 import { ProductCard } from "@/components/product/product-card";
 import { formatPrice } from "@/services/catalogue";
 
 const maxPrice = 3000;
+const minPrice = 0;
+const defaultAvailability = ["in-stock", "sold-out"];
 
 export function ShopCatalogue({
   filters,
   products,
-  totalProducts,
   pageSize,
   hasMore,
   categories,
@@ -23,7 +23,10 @@ export function ShopCatalogue({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [priceValue, setPriceValue] = useState(Number(filters.priceMax));
+  const [priceValues, setPriceValues] = useState({
+    min: Number(filters.priceMin ?? minPrice),
+    max: Number(filters.priceMax ?? maxPrice),
+  });
   const [loadedProducts, setLoadedProducts] = useState(products);
   const [canLoadMore, setCanLoadMore] = useState(hasMore);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -43,7 +46,8 @@ export function ShopCatalogue({
       collection: optimisticParams.getAll("collection"),
       colour: optimisticParams.getAll("colour"),
       material: optimisticParams.getAll("material"),
-      availability: optimisticParams.get("availability") || "in-stock",
+      availability: normalizeAvailability(optimisticParams.getAll("availability")),
+      priceMin: optimisticParams.get("priceMin") || String(minPrice),
       priceMax: optimisticParams.get("priceMax") || String(maxPrice),
       sort: optimisticParams.get("sort") || "newest",
     }),
@@ -86,20 +90,26 @@ export function ShopCatalogue({
   }, [products, hasMore, currentQuery]);
 
   useEffect(() => {
-    setPriceValue(Number(uiFilters.priceMax));
-  }, [uiFilters.priceMax]);
+    setPriceValues({
+      min: Number(uiFilters.priceMin),
+      max: Number(uiFilters.priceMax),
+    });
+  }, [uiFilters.priceMin, uiFilters.priceMax]);
 
   useEffect(() => {
-    if (String(priceValue) === String(uiFilters.priceMax)) {
+    if (
+      String(priceValues.min) === String(uiFilters.priceMin) &&
+      String(priceValues.max) === String(uiFilters.priceMax)
+    ) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      setParam("priceMax", String(priceValue));
+      setPriceParams(priceValues);
     }, 350);
 
     return () => clearTimeout(timeout);
-  }, [priceValue, uiFilters.priceMax]);
+  }, [priceValues, uiFilters.priceMin, uiFilters.priceMax]);
 
   useEffect(() => {
     const sentinel = loadMoreRef.current;
@@ -133,10 +143,32 @@ export function ShopCatalogue({
   function setParam(name, value) {
     const next = new URLSearchParams(optimisticQuery);
 
-    if (!value || (name === "availability" && value === "in-stock")) {
+    if (!value) {
       next.delete(name);
     } else {
       next.set(name, value);
+    }
+
+    navigate(next);
+  }
+
+  function setPriceParams(values) {
+    const next = new URLSearchParams(optimisticQuery);
+    const sanitizedMin = clampPrice(values.min, minPrice, maxPrice);
+    const sanitizedMax = clampPrice(values.max, minPrice, maxPrice);
+    const nextMin = Math.min(sanitizedMin, sanitizedMax);
+    const nextMax = Math.max(sanitizedMin, sanitizedMax);
+
+    if (nextMin === minPrice) {
+      next.delete("priceMin");
+    } else {
+      next.set("priceMin", String(nextMin));
+    }
+
+    if (nextMax === maxPrice) {
+      next.delete("priceMax");
+    } else {
+      next.set("priceMax", String(nextMax));
     }
 
     navigate(next);
@@ -160,6 +192,33 @@ export function ShopCatalogue({
         (category) => category.parentCategory?.slug === value,
       )) {
         removeValue(next, "category", child.slug);
+      }
+    }
+
+    navigate(next);
+  }
+
+  function toggleAvailability(value, checked) {
+    const next = new URLSearchParams(optimisticQuery);
+    const selected = new Set(uiFilters.availability);
+
+    if (checked) {
+      selected.add(value);
+      selected.delete("none");
+    } else {
+      selected.delete(value);
+    }
+
+    const values = Array.from(selected).filter((item) =>
+      defaultAvailability.includes(item),
+    );
+
+    next.delete("availability");
+    if (values.length === 0) {
+      next.append("availability", "none");
+    } else if (values.length !== defaultAvailability.length) {
+      for (const item of values) {
+        next.append("availability", item);
       }
     }
 
@@ -230,9 +289,9 @@ export function ShopCatalogue({
 
   return (
     <section className="px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[300px_1fr]">
+      <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,4fr)]">
         <aside className="border border-border bg-background p-5 lg:sticky lg:top-24 lg:self-start">
-          <h2 className="text-sm font-semibold text-brand-maroon">Filters</h2>
+          <h2 className="text-xl font-semibold text-brand-maroon">Filters</h2>
 
           <div className="mt-5 space-y-4">
             <FilterAccordion title="Category" defaultOpen>
@@ -279,58 +338,79 @@ export function ShopCatalogue({
               />
             </FilterAccordion>
             <FilterAccordion title="Price" defaultOpen>
-              <div>
-                <div className="flex items-center justify-between text-xs font-semibold text-brand-maroon/75">
-                  <span>{formatPrice(0)}</span>
-                  <span>{formatPrice(priceValue)}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max={maxPrice}
-                  step="50"
-                  value={priceValue}
-                  onChange={(event) => setPriceValue(Number(event.target.value))}
-                  className="mt-4 w-full cursor-pointer accent-brand-maroon"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <label className="grid gap-1.5 text-xs font-semibold text-brand-maroon/75">
+                  Min
+                  <input
+                    type="number"
+                    min={minPrice}
+                    max={maxPrice}
+                    step="50"
+                    value={priceValues.min}
+                    onChange={(event) =>
+                      setPriceValues((current) => ({
+                        ...current,
+                        min: event.target.value,
+                      }))
+                    }
+                    className="h-11 w-full rounded-sm border border-border bg-background px-3 text-sm font-normal text-foreground outline-none transition-colors focus:border-brand-maroon"
+                  />
+                </label>
+                <label className="grid gap-1.5 text-xs font-semibold text-brand-maroon/75">
+                  Max
+                  <input
+                    type="number"
+                    min={minPrice}
+                    max={maxPrice}
+                    step="50"
+                    value={priceValues.max}
+                    onChange={(event) =>
+                      setPriceValues((current) => ({
+                        ...current,
+                        max: event.target.value,
+                      }))
+                    }
+                    className="h-11 w-full rounded-sm border border-border bg-background px-3 text-sm font-normal text-foreground outline-none transition-colors focus:border-brand-maroon"
+                  />
+                </label>
               </div>
             </FilterAccordion>
             <FilterAccordion title="Availability">
-              <select
-                id="availability"
-                value={uiFilters.availability}
-                onChange={(event) => setParam("availability", event.target.value)}
-                className="h-11 w-full cursor-pointer rounded-sm border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-brand-maroon"
-              >
-                <option value="all">All</option>
-                <option value="in-stock">In stock</option>
-                <option value="sold-out">Out of stock</option>
-              </select>
+              <div className="grid gap-3">
+                <AvailabilityCheckbox
+                  value="in-stock"
+                  label="In stock"
+                  checked={uiFilters.availability.includes("in-stock")}
+                  onToggle={toggleAvailability}
+                />
+                <AvailabilityCheckbox
+                  value="sold-out"
+                  label="Out of stock"
+                  checked={uiFilters.availability.includes("sold-out")}
+                  onToggle={toggleAvailability}
+                />
+              </div>
             </FilterAccordion>
           </div>
         </aside>
 
         <div className="relative">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <SectionHeading
-              eyebrow={`${totalProducts} product${
-                totalProducts === 1 ? "" : "s"
-              }`}
-              title="Traditional Jewellery"
-              description="Browse products currently published in Sanity."
-            />
-            <div className="w-full sm:w-56">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="font-display text-3xl font-semibold text-brand-maroon">
+              Traditional Jewellery
+            </h1>
+            <div className="flex w-full items-center gap-3 sm:w-auto">
               <label
                 htmlFor="sort"
-                className="text-sm font-semibold text-brand-maroon"
+                className="shrink-0 text-sm font-semibold text-brand-maroon"
               >
-                Sort
+                Sort By
               </label>
               <select
                 id="sort"
                 value={uiFilters.sort}
                 onChange={(event) => setParam("sort", event.target.value)}
-                className="mt-3 h-11 w-full cursor-pointer rounded-sm border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus:border-brand-maroon"
+                className="h-10 w-full cursor-pointer rounded-sm border border-border bg-background px-3 pr-9 text-sm text-foreground outline-none transition-colors focus:border-brand-maroon sm:w-44"
               >
                 <option value="newest">Newest</option>
                 <option value="price-asc">Price: low to high</option>
@@ -365,12 +445,13 @@ export function ShopCatalogue({
           <div className="relative">
             {isPending ? <ProductLoader /> : null}
             {loadedProducts.length ? (
-              <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
                 {loadedProducts.map((product, index) => (
                   <ProductCard
                     key={product.slug}
                     product={product}
                     listingHref={listingHref}
+                    compact
                     visualType={
                       index % 3 === 0
                         ? "bangle"
@@ -483,6 +564,25 @@ function CheckboxGroup({
   );
 }
 
+function AvailabilityCheckbox({ value, label, checked, onToggle }) {
+  return (
+    <label
+      htmlFor={`availability-${value}`}
+      className="flex cursor-pointer items-center gap-3 text-sm text-foreground"
+    >
+      <input
+        id={`availability-${value}`}
+        type="checkbox"
+        value={value}
+        checked={checked}
+        onChange={(event) => onToggle(value, event.target.checked)}
+        className="h-4 w-4 cursor-pointer rounded-sm border-border accent-brand-maroon"
+      />
+      <span>{label}</span>
+    </label>
+  );
+}
+
 function ProductLoader() {
   return (
     <div className="absolute inset-x-0 top-6 z-10 grid min-h-52 place-items-center border border-border bg-background/90 p-6 backdrop-blur-sm">
@@ -503,10 +603,25 @@ function buildActiveChips(filters, options) {
   addOptionChips(chips, "colour", filters.colour, options.colours);
   addOptionChips(chips, "material", filters.material, options.materials);
 
-  if (filters.availability && filters.availability !== "in-stock") {
+  if (filters.availability.includes("none")) {
     chips.push({
       name: "availability",
-      label: filters.availability === "all" ? "All stock" : "Out of stock",
+      value: "none",
+      label: "No stock selected",
+    });
+  } else if (filters.availability.length === 1) {
+    chips.push({
+      name: "availability",
+      value: filters.availability[0],
+      label:
+        filters.availability[0] === "in-stock" ? "In stock" : "Out of stock",
+    });
+  }
+
+  if (Number(filters.priceMin) > minPrice) {
+    chips.push({
+      name: "priceMin",
+      label: `From ${formatPrice(Number(filters.priceMin))}`,
     });
   }
 
@@ -547,6 +662,25 @@ function removeValue(params, name, value) {
   for (const item of values) {
     params.append(name, item);
   }
+}
+
+function normalizeAvailability(values) {
+  if (values.includes("none")) {
+    return ["none"];
+  }
+
+  const selected = values.filter((value) => defaultAvailability.includes(value));
+  return selected.length ? selected : defaultAvailability;
+}
+
+function clampPrice(value, fallback, max) {
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(parsed, minPrice), max);
 }
 
 function unique(items) {
