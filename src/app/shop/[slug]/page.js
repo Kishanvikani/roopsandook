@@ -92,10 +92,7 @@ export default async function ProductDetailPage({ params, searchParams }) {
           <div className="mx-auto w-full max-w-7xl border-t border-border pt-10">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-maroon">
-                  Related
-                </p>
-                <h2 className="font-display mt-3 text-3xl font-semibold text-foreground">
+                <h2 className="font-display text-3xl font-semibold text-foreground">
                   You may also like
                 </h2>
               </div>
@@ -106,12 +103,13 @@ export default async function ProductDetailPage({ params, searchParams }) {
                 View all
               </Link>
             </div>
-            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {relatedProducts.map((relatedProduct, index) => (
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-5">
+              {relatedProducts.slice(0, 5).map((relatedProduct, index) => (
                 <ProductCard
                   key={relatedProduct.slug}
                   product={relatedProduct}
                   listingHref={backHref}
+                  compact
                   visualType={index % 2 === 0 ? "earrings" : "necklace"}
                 />
               ))}

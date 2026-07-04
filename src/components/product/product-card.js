@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart } from "lucide-react";
+import { Heart, Minus, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useCommerce } from "@/components/commerce/commerce-provider";
@@ -15,7 +15,14 @@ export function ProductCard({
   initialSku,
   compact = false,
 }) {
-  const { addToBag, isWishlisted, toggleWishlist } = useCommerce();
+  const {
+    addToBag,
+    bagItems,
+    isWishlisted,
+    removeFromBag,
+    toggleWishlist,
+    updateBagQuantity,
+  } = useCommerce();
   const variants = product.variants || [];
   const defaultVariant =
     variants.find((variant) => isVariantAvailable(variant)) || variants[0];
@@ -37,6 +44,12 @@ export function ProductCard({
   const wishlisted = selectedVariant
     ? isWishlisted(product.id, selectedVariant.sku)
     : false;
+  const bagItem = selectedVariant
+    ? bagItems.find(
+        (item) =>
+          item.productId === product.id && item.sku === selectedVariant.sku,
+      )
+    : null;
   const productHref = `/shop/${product.slug}?sku=${encodeURIComponent(
     selectedVariant?.sku || "",
   )}&from=${encodeURIComponent(listingHref)}`;
@@ -69,6 +82,37 @@ export function ProductCard({
       sku: selectedVariant.sku,
       stockLimit,
     });
+  }
+
+  function decreaseBagQuantity() {
+    if (!bagItem || !selectedVariant?.sku) {
+      return;
+    }
+
+    if (bagItem.quantity <= 1) {
+      removeFromBag(product.id, selectedVariant.sku);
+      return;
+    }
+
+    updateBagQuantity(
+      product.id,
+      selectedVariant.sku,
+      bagItem.quantity - 1,
+      stockLimit,
+    );
+  }
+
+  function increaseBagQuantity() {
+    if (!bagItem || !selectedVariant?.sku) {
+      return;
+    }
+
+    updateBagQuantity(
+      product.id,
+      selectedVariant.sku,
+      bagItem.quantity + 1,
+      stockLimit,
+    );
   }
 
   return (
@@ -182,16 +226,45 @@ export function ProductCard({
             </div>
           </div>
         ) : null}
-        <button
-          type="button"
-          disabled={!selectedVariantAvailable}
-          onClick={handleAddToBag}
-          className={`mt-4 w-full cursor-pointer rounded-sm border border-brand-maroon text-xs font-semibold uppercase tracking-wide text-brand-maroon transition-colors hover:bg-brand-maroon hover:text-brand-ivory disabled:cursor-not-allowed disabled:border-muted-foreground disabled:text-muted-foreground disabled:hover:bg-transparent ${
-            compact ? "h-9" : "h-10"
-          }`}
-        >
-          {selectedVariantAvailable ? "Add to bag" : "Sold out"}
-        </button>
+        {bagItem ? (
+          <div
+            className={`mt-4 grid w-full grid-cols-[auto_1fr_auto] border border-brand-maroon text-brand-maroon ${
+              compact ? "h-9" : "h-10"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={decreaseBagQuantity}
+              className="grid h-full w-10 cursor-pointer place-items-center transition-colors hover:bg-brand-ivory"
+              aria-label={`Decrease ${product.name} quantity`}
+            >
+              <Minus size={14} aria-hidden="true" />
+            </button>
+            <span className="grid h-full place-items-center border-x border-brand-maroon/25 text-xs font-semibold">
+              {bagItem.quantity}
+            </span>
+            <button
+              type="button"
+              onClick={increaseBagQuantity}
+              disabled={bagItem.quantity >= stockLimit}
+              className="grid h-full w-10 cursor-pointer place-items-center transition-colors hover:bg-brand-ivory disabled:cursor-not-allowed disabled:text-muted-foreground"
+              aria-label={`Increase ${product.name} quantity`}
+            >
+              <Plus size={14} aria-hidden="true" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={!selectedVariantAvailable}
+            onClick={handleAddToBag}
+            className={`mt-4 w-full cursor-pointer rounded-sm border border-brand-maroon text-xs font-semibold uppercase tracking-wide text-brand-maroon transition-colors hover:bg-brand-maroon hover:text-brand-ivory disabled:cursor-not-allowed disabled:border-muted-foreground disabled:text-muted-foreground disabled:hover:bg-transparent ${
+              compact ? "h-9" : "h-10"
+            }`}
+          >
+            {selectedVariantAvailable ? "Add to bag" : "Sold out"}
+          </button>
+        )}
       </div>
     </article>
   );

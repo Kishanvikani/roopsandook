@@ -176,6 +176,15 @@ function isActivePath(pathname, href) {
     return pathname === "/";
   }
 
+  if (href === "/collections") {
+    return (
+      pathname === href ||
+      pathname.startsWith(`${href}/`) ||
+      pathname === "/shop" ||
+      pathname.startsWith("/shop/")
+    );
+  }
+
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

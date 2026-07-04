@@ -2,7 +2,7 @@ import { BrandLogo } from "@/components/common/brand-logo";
 
 export function AboutHero() {
   return (
-    <section className="bg-brand-ivory px-4 py-14 sm:px-6 lg:px-8">
+    <section className="px-4 py-14 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-7xl gap-10 md:grid-cols-[0.95fr_1.05fr] md:items-center">
         <div className="bg-brand-maroon p-4">
           <div className="grid min-h-80 place-items-center border border-brand-ivory/35 px-6 text-center text-brand-ivory">

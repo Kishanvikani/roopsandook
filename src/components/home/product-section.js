@@ -6,7 +6,7 @@ export async function ProductSection() {
   const { products } = await getCatalogueData();
   const featuredProducts = products
     .filter((product) => product.inStock)
-    .slice(0, 4);
+    .slice(0, 5);
 
   if (!featuredProducts.length) {
     return null;
@@ -22,7 +22,7 @@ export async function ProductSection() {
           action={{ label: "Shop all", href: "/shop" }}
         />
 
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-5">
           {featuredProducts.map((product, index) => (
             <ProductCard
               key={product.slug}

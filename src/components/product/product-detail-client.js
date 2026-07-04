@@ -1,8 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { ArrowLeft, ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Minus,
+  Plus,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { useCommerce } from "@/components/commerce/commerce-provider";
@@ -10,7 +17,8 @@ import { JewelleryPlaceholder } from "@/components/product/jewellery-placeholder
 import { formatPrice } from "@/services/catalogue";
 
 export function ProductDetailClient({ product, backHref, initialSku }) {
-  const { addToBag } = useCommerce();
+  const router = useRouter();
+  const { addToBag, isWishlisted, toggleWishlist } = useCommerce();
   const variants = product.variants || [];
   const defaultVariant =
     variants.find((variant) => isVariantAvailable(variant)) || variants[0];
@@ -23,6 +31,9 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
   const selectedVariantAvailable = selectedVariant
     ? isVariantAvailable(selectedVariant)
     : product.inStock !== false;
+  const wishlisted = selectedVariant
+    ? isWishlisted(product.id, selectedVariant.sku)
+    : false;
   const stockLimit = selectedVariant?.inventoryCount || product.totalInventory || 1;
   const galleryImages = useMemo(
     () => {
@@ -69,11 +80,40 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
     }, { incrementExisting: true });
   }
 
+  function handleWishlist() {
+    if (!selectedVariant?.sku) {
+      return;
+    }
+
+    toggleWishlist({
+      productId: product.id,
+      slug: product.slug,
+      sku: selectedVariant.sku,
+    });
+  }
+
+  function handleBack() {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push(backHref);
+  }
+
   return (
     <section className="px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-6xl gap-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.78fr)]">
         <div>
           <div className="relative mx-auto max-w-xl">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="absolute left-3 top-3 z-10 inline-flex items-center gap-2 rounded-sm bg-background/90 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon shadow-sm transition-colors hover:bg-brand-maroon hover:text-brand-ivory"
+            >
+              <ArrowLeft size={16} aria-hidden="true" />
+              Back
+            </button>
             {activeImage ? (
               <div className="relative aspect-[4/5] overflow-hidden bg-brand-ivory">
                 <Image
@@ -138,20 +178,15 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
           ) : null}
         </div>
 
-        <div className="lg:pt-2">
-          <Link
-            href={backHref}
-            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-brand-maroon hover:text-brand-maroon/75"
-          >
-            <ArrowLeft size={16} aria-hidden="true" />
-            Back to shop
-          </Link>
-          <p className="mt-6 text-xs font-semibold uppercase tracking-[0.24em] text-brand-maroon/65">
-            {product.childCategory?.title || product.category?.title || "Roop Sandook"}
-          </p>
-          <h1 className="font-display mt-3 text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
+        <div>
+          <h3 className="font-display text-3xl font-semibold leading-tight text-foreground">
             {product.name}
-          </h1>
+          </h3>
+          {selectedVariant?.sku ? (
+            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon/65">
+              SKU: {selectedVariant.sku}
+            </p>
+          ) : null}
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <p className="text-xl font-semibold text-brand-maroon">
               {typeof selectedVariant?.price === "number"
@@ -175,33 +210,8 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
             ) : null}
           </div>
 
-          {product.shortDescription || product.description ? (
-            <p className="mt-6 text-sm leading-7 text-muted-foreground">
-              {product.shortDescription || product.description}
-            </p>
-          ) : null}
-
-          <div className="mt-8 grid gap-4 border-y border-border py-6 sm:grid-cols-2">
-            <DetailBlock
-              label="Materials"
-              value={product.materials.map((item) => item.title).join(", ")}
-            />
-            <DetailBlock
-              label="Availability"
-              value={
-                selectedVariantAvailable
-                  ? `${stockLimit} in stock`
-                  : "Sold out"
-              }
-            />
-            <DetailBlock
-              label="Sub-Category"
-              value={product.childCategory?.title}
-            />
-          </div>
-
           {variants.length ? (
-            <div className="mt-8">
+            <div className="mt-6">
               <h2 className="text-sm font-semibold text-brand-maroon">
                 Select colour
               </h2>
@@ -226,26 +236,21 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
                   </button>
                 ))}
               </div>
-              {selectedVariant ? (
-                <p className="mt-3 text-xs text-muted-foreground">
-                  SKU: {selectedVariant.sku}
-                </p>
-              ) : null}
             </div>
           ) : null}
 
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             {selectedVariantAvailable ? (
               <div className="inline-flex w-max items-center border border-border">
                 <button
                   type="button"
                   onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                  className="grid h-12 w-12 cursor-pointer place-items-center text-brand-maroon transition-colors hover:bg-brand-ivory"
+                  className="grid h-10 w-10 cursor-pointer place-items-center text-brand-maroon transition-colors hover:bg-brand-ivory"
                   aria-label="Decrease quantity"
                 >
-                  <Minus size={16} aria-hidden="true" />
+                  <Minus size={14} aria-hidden="true" />
                 </button>
-                <span className="grid h-12 min-w-12 place-items-center border-x border-border px-3 text-sm font-semibold">
+                <span className="grid h-10 min-w-10 place-items-center border-x border-border px-3 text-sm font-semibold">
                   {quantity}
                 </span>
                 <button
@@ -254,56 +259,93 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
                     setQuantity((current) => Math.min(stockLimit, current + 1))
                   }
                   disabled={quantity >= stockLimit}
-                  className="grid h-12 w-12 cursor-pointer place-items-center text-brand-maroon transition-colors hover:bg-brand-ivory"
+                  className="grid h-10 w-10 cursor-pointer place-items-center text-brand-maroon transition-colors hover:bg-brand-ivory"
                   aria-label="Increase quantity"
                 >
-                  <Plus size={16} aria-hidden="true" />
+                  <Plus size={14} aria-hidden="true" />
                 </button>
               </div>
             ) : null}
             <button
               type="button"
+              disabled={!selectedVariant?.sku}
+              onClick={handleWishlist}
+              className={`inline-flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-sm border px-4 text-xs font-semibold uppercase tracking-wide transition-colors disabled:cursor-not-allowed disabled:border-muted-foreground disabled:text-muted-foreground ${
+                wishlisted
+                  ? "border-brand-maroon bg-brand-ivory text-brand-maroon"
+                  : "border-brand-maroon text-brand-maroon hover:bg-brand-maroon hover:text-brand-ivory"
+              }`}
+            >
+              <Heart
+                size={14}
+                fill={wishlisted ? "currentColor" : "none"}
+                aria-hidden="true"
+              />
+              {wishlisted ? "Wishlisted" : "Wishlist"}
+            </button>
+            <button
+              type="button"
               disabled={!selectedVariantAvailable}
               onClick={handleAddToBag}
-              className="h-12 flex-1 cursor-pointer rounded-sm bg-brand-maroon text-xs font-semibold uppercase tracking-wide text-brand-ivory transition-colors hover:bg-brand-maroon/90 disabled:cursor-not-allowed disabled:bg-muted-foreground"
+              className="h-10 flex-1 cursor-pointer rounded-sm bg-brand-maroon px-4 text-xs font-semibold uppercase tracking-wide text-brand-ivory transition-colors hover:bg-brand-maroon/90 disabled:cursor-not-allowed disabled:bg-muted-foreground"
             >
               {selectedVariantAvailable ? "Add to bag" : "Sold out"}
             </button>
           </div>
 
-          {product.careInstructions || product.shippingInfo ? (
-            <div className="mt-8 grid gap-5 text-sm leading-7 text-muted-foreground">
-              {product.careInstructions ? (
-                <InfoSection title="Care" content={product.careInstructions} />
-              ) : null}
-              {product.shippingInfo ? (
-                <InfoSection title="Shipping" content={product.shippingInfo} />
-              ) : null}
+          <div className="mt-8 border-y border-border">
+            <DetailBlock
+              label="Product Description"
+              value={product.shortDescription || product.description}
+              className="py-4"
+            />
+            <div className="grid gap-4 border-t border-border py-4 sm:grid-cols-2">
+              <DetailBlock
+                label="Materials"
+                value={product.materials.map((item) => item.title).join(", ")}
+              />
+              <DetailBlock
+                label="Availability"
+                value={
+                  selectedVariantAvailable
+                    ? `${stockLimit} in stock`
+                    : "Sold out"
+                }
+              />
+              <DetailBlock
+                label="Sub-Category"
+                value={product.childCategory?.title}
+              />
             </div>
-          ) : null}
+            {product.careInstructions ? (
+              <DetailBlock
+                label="Care"
+                value={product.careInstructions}
+                className="border-t border-border py-4"
+              />
+            ) : null}
+            {product.shippingInfo ? (
+              <DetailBlock
+                label="Shipping"
+                value={product.shippingInfo}
+                className="border-t border-border py-4"
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function DetailBlock({ label, value }) {
+function DetailBlock({ label, value, className = "" }) {
   return (
-    <div>
+    <div className={className}>
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon/65">
         {label}
       </p>
       <p className="mt-2 text-sm text-foreground">{value || "Not specified"}</p>
     </div>
-  );
-}
-
-function InfoSection({ title, content }) {
-  return (
-    <section>
-      <h2 className="text-sm font-semibold text-brand-maroon">{title}</h2>
-      <p className="mt-2">{content}</p>
-    </section>
   );
 }
 
