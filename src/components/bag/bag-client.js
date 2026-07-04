@@ -145,7 +145,7 @@ export function BagClient({ products }) {
             />
             <InfoBlock
               title="Payment"
-              text="Payment will be completed by bank transfer or GPay after WhatsApp confirmation."
+              text="Payment will be completed by bank transfer or UPI after WhatsApp confirmation."
             />
           </div>
         </div>
@@ -199,7 +199,7 @@ function BagRow({ row, onMoveToWishlist, onQuantityChange, onRemove }) {
   const productHref = `/shop/${row.product.slug}?sku=${encodeURIComponent(row.variant.sku)}&from=/bag`;
 
   return (
-    <article className="grid grid-cols-[112px_1fr] gap-4 border border-border bg-background p-4 sm:grid-cols-[120px_1fr_auto] sm:items-stretch">
+    <article className="grid grid-cols-[112px_1fr] grid-rows-[8.5rem_auto] gap-4 border border-border bg-background p-4 sm:grid-cols-[120px_1fr_auto] sm:grid-rows-none sm:items-stretch">
       <Link
         href={productHref}
         className="block h-full min-h-28 sm:min-h-32"
@@ -221,7 +221,7 @@ function BagRow({ row, onMoveToWishlist, onQuantityChange, onRemove }) {
           </div>
         )}
       </Link>
-      <div className="col-span-2 row-start-2 flex items-start justify-between gap-3 sm:col-span-1 sm:row-start-auto sm:block">
+      <div className="col-span-2 row-start-2 text-left sm:col-span-1 sm:row-start-auto sm:block">
         <div>
           <h2 className="text-sm font-semibold text-foreground">
             <Link href={productHref} className="hover:text-brand-maroon">
@@ -232,7 +232,7 @@ function BagRow({ row, onMoveToWishlist, onQuantityChange, onRemove }) {
             Colour: {row.variant.colour?.title || "Default"}
           </p>
         </div>
-        <div className="flex shrink-0 gap-2 sm:mt-3 sm:flex-wrap">
+        <div className="hidden shrink-0 gap-2 sm:mt-3 sm:flex sm:flex-wrap">
           <button
             type="button"
             onClick={onMoveToWishlist}
@@ -253,7 +253,7 @@ function BagRow({ row, onMoveToWishlist, onQuantityChange, onRemove }) {
           </button>
         </div>
       </div>
-      <div className="flex h-full flex-col items-end gap-2 text-right text-sm font-semibold text-brand-maroon sm:block">
+      <div className="col-start-2 row-start-1 flex h-full flex-col items-end justify-end gap-2 self-stretch text-right text-sm font-semibold text-brand-maroon sm:col-start-auto sm:row-start-auto sm:block">
         <p>{formatPrice(lineTotal)}</p>
         <div className="inline-flex items-center border border-border sm:mt-3">
           <button
@@ -280,6 +280,24 @@ function BagRow({ row, onMoveToWishlist, onQuantityChange, onRemove }) {
         <p className="text-xs text-muted-foreground sm:mt-3">
           Unit price {formatPrice(price)}
         </p>
+      </div>
+      <div className="col-start-2 row-start-1 flex shrink-0 justify-end gap-2 self-start sm:hidden">
+        <button
+          type="button"
+          onClick={onMoveToWishlist}
+          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-border text-brand-maroon transition-colors hover:border-brand-maroon"
+          aria-label={`Move ${row.product.name} to wishlist`}
+        >
+          <Heart size={14} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:border-brand-maroon hover:text-brand-maroon"
+          aria-label={`Remove ${row.product.name}`}
+        >
+          <Trash2 size={14} aria-hidden="true" />
+        </button>
       </div>
     </article>
   );

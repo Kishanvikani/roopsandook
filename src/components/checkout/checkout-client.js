@@ -154,7 +154,7 @@ export function CheckoutClient({ products }) {
       `- City: ${getCity(customer).trim()}`,
       customer.note.trim() ? `- Note: ${customer.note.trim()}` : null,
       "",
-      "Payment mode: Bank transfer or GPay after confirmation.",
+      "Payment mode: Bank transfer or UPI after confirmation.",
       "Please confirm availability, payment details, and shipping timeline.",
     ];
 
@@ -294,7 +294,7 @@ export function CheckoutClient({ products }) {
               <SummaryLine label="Total" value={formatPrice(total)} strong />
             </div>
             <p className="mt-4 text-sm leading-6 text-muted-foreground">
-              Payment will be completed by bank transfer or GPay after WhatsApp
+              Payment will be completed by bank transfer or UPI after WhatsApp
               confirmation.
             </p>
             <a

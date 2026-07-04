@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Mail, MessageCircle } from "lucide-react";
 
 import { BrandLogo } from "@/components/common/brand-logo";
 import {
@@ -26,7 +27,7 @@ export async function SiteFooter() {
 
   return (
     <footer className="border-t border-brand-maroon/15 bg-brand-maroon text-brand-ivory">
-      <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr] lg:px-8">
+      <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.2fr_2fr_1fr] lg:px-8">
         <div>
           <BrandLogo variant="footer" />
           <p className="mt-3 max-w-sm text-sm leading-6 text-brand-ivory/75">
@@ -34,33 +35,35 @@ export async function SiteFooter() {
           </p>
         </div>
 
-        <div>
-          <p className="text-sm font-semibold">Categories</p>
-          <div className="mt-3 grid gap-2">
-            {categoryLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm text-brand-ivory/75 hover:text-brand-ivory"
-              >
-                {item.label}
-              </Link>
-            ))}
+        <div className="grid grid-cols-2 gap-8">
+          <div>
+            <p className="text-sm font-semibold">Categories</p>
+            <div className="mt-3 grid gap-2">
+              {categoryLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm text-brand-ivory/75 hover:text-brand-ivory"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div>
-          <p className="text-sm font-semibold">Quick Links</p>
-          <div className="mt-3 grid gap-2">
-            {quickLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm text-brand-ivory/75 hover:text-brand-ivory"
-              >
-                {item.label}
-              </Link>
-            ))}
+          <div>
+            <p className="text-sm font-semibold">Quick Links</p>
+            <div className="mt-3 grid gap-2">
+              {quickLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm text-brand-ivory/75 hover:text-brand-ivory"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -84,7 +87,7 @@ export async function SiteFooter() {
               className="inline-flex items-center gap-2 text-sm text-brand-ivory/75 hover:text-brand-ivory"
               aria-label="Chat with Roop Sandook on WhatsApp"
             >
-              <span aria-hidden="true">WA</span>
+              <MessageCircle className="h-[18px] w-[18px]" aria-hidden="true" />
               <span>{formatIndianPhone()}</span>
             </Link>
             <Link
@@ -92,7 +95,7 @@ export async function SiteFooter() {
               className="inline-flex items-center gap-2 text-sm text-brand-ivory/75 hover:text-brand-ivory"
               aria-label={`Email ${contactDetails.email}`}
             >
-              <span aria-hidden="true">@</span>
+              <Mail className="h-[18px] w-[18px]" aria-hidden="true" />
               <span>{contactDetails.email}</span>
             </Link>
           </div>
