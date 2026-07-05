@@ -229,7 +229,7 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
                   >
                     <span
                       className="h-3 w-3 rounded-full border border-border"
-                      style={{ backgroundColor: colourFor(variant.colour) }}
+                      style={colourStyleFor(variant.colour)}
                       aria-hidden="true"
                     />
                     {variant.colour?.title || "Default"}
@@ -239,9 +239,9 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
             </div>
           ) : null}
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
             {selectedVariantAvailable ? (
-              <div className="inline-flex w-max items-center border border-border">
+              <div className="inline-flex shrink-0 items-center border border-border">
                 <button
                   type="button"
                   onClick={() => setQuantity((current) => Math.max(1, current - 1))}
@@ -266,31 +266,32 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
                 </button>
               </div>
             ) : null}
-            <button
-              type="button"
-              disabled={!selectedVariant?.sku}
-              onClick={handleWishlist}
-              className={`inline-flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-sm border px-4 text-xs font-semibold uppercase tracking-wide transition-colors disabled:cursor-not-allowed disabled:border-muted-foreground disabled:text-muted-foreground ${
-                wishlisted
-                  ? "border-brand-maroon bg-brand-ivory text-brand-maroon"
-                  : "border-brand-maroon text-brand-maroon hover:bg-brand-maroon hover:text-brand-ivory"
-              }`}
-            >
-              <Heart
-                size={14}
-                fill={wishlisted ? "currentColor" : "none"}
-                aria-hidden="true"
-              />
-              {wishlisted ? "Wishlisted" : "Wishlist"}
-            </button>
-            <button
-              type="button"
-              disabled={!selectedVariantAvailable}
-              onClick={handleAddToBag}
-              className="h-10 flex-1 cursor-pointer rounded-sm bg-brand-maroon px-4 text-xs font-semibold uppercase tracking-wide text-brand-ivory transition-colors hover:bg-brand-maroon/90 disabled:cursor-not-allowed disabled:bg-muted-foreground"
-            >
-              {selectedVariantAvailable ? "Add to bag" : "Sold out"}
-            </button>
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-1 sm:items-center sm:gap-3">
+              <button
+                type="button"
+                disabled={!selectedVariant?.sku}
+                onClick={handleWishlist}
+                className={`inline-flex h-10 cursor-pointer items-center justify-center rounded-sm border px-3 text-xs font-semibold uppercase tracking-wide transition-colors disabled:cursor-not-allowed disabled:border-muted-foreground disabled:text-muted-foreground sm:flex-1 ${
+                  wishlisted
+                    ? "border-brand-maroon bg-brand-ivory text-brand-maroon"
+                    : "border-brand-maroon text-brand-maroon hover:bg-brand-maroon hover:text-brand-ivory"
+                }`}
+                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                title={wishlisted ? "Wishlisted" : "Wishlist"}
+              >
+                {wishlisted ? "Wishlisted" : "Wishlist"}
+              </button>
+              <button
+                type="button"
+                disabled={!selectedVariantAvailable}
+                onClick={handleAddToBag}
+                className="inline-flex h-10 cursor-pointer items-center justify-center rounded-sm bg-brand-maroon px-3 text-xs font-semibold uppercase tracking-wide text-brand-ivory transition-colors hover:bg-brand-maroon/90 disabled:cursor-not-allowed disabled:bg-muted-foreground sm:flex-1"
+                aria-label={selectedVariantAvailable ? "Add to bag" : "Sold out"}
+                title={selectedVariantAvailable ? "Add to bag" : "Sold out"}
+              >
+                {selectedVariantAvailable ? "Add to bag" : "Sold out"}
+              </button>
+            </div>
           </div>
 
           <div className="mt-8 border-y border-border">
@@ -353,25 +354,69 @@ function isVariantAvailable(variant) {
   return (variant.inventoryCount || 0) > 0 && variant.inStock !== false;
 }
 
-function colourFor(item) {
-  if (item?.hexCode) {
-    return item.hexCode;
+function colourStyleFor(item) {
+  const colours = coloursFor(item);
+
+  if (colours.length > 1) {
+    return {
+      background: `linear-gradient(90deg, ${colours[0]} 0 50%, ${colours[1]} 50% 100%)`,
+    };
   }
 
-  const slug = item?.slug || item?.title?.toLowerCase() || "";
+  return { backgroundColor: colours[0] || "#d6c3a2" };
+}
+
+function coloursFor(item) {
+  const title = item?.title || "";
+  const colourNames = title
+    .split(/\s*(?:&|\band\b|\/|\+|,)\s*/i)
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  if (colourNames.length > 1) {
+    return colourNames.slice(0, 2).map((name) => colourForName(name));
+  }
+
+  if (item?.hexCode) {
+    return [item.hexCode];
+  }
+
+  return [colourForName(item?.slug || title)];
+}
+
+function colourForName(name) {
+  const slug = name?.toLowerCase().trim().replace(/[\s_-]+/g, "-") || "";
   const fallback = {
     gold: "#c7952d",
+    golden: "#c7952d",
+    yellow: "#eab308",
+    turquoise: "#14b8a6",
     pearl: "#f3ead8",
     ruby: "#9f1239",
     maroon: "#7f1d1d",
     green: "#166534",
+    "light-green": "#86efac",
+    "dark-green": "#14532d",
+    lime: "#84cc16",
+    olive: "#708238",
     emerald: "#047857",
     silver: "#cbd5e1",
+    grey: "#9ca3af",
+    gray: "#9ca3af",
     black: "#111827",
     white: "#f8fafc",
+    ivory: "#fff7ed",
+    cream: "#fef3c7",
     red: "#dc2626",
+    orange: "#f97316",
     blue: "#2563eb",
+    "light-blue": "#93c5fd",
+    navy: "#1e3a8a",
     pink: "#db2777",
+    purple: "#9333ea",
+    violet: "#7c3aed",
+    brown: "#92400e",
+    beige: "#d6c3a2",
   };
 
   return fallback[slug] || "#d6c3a2";

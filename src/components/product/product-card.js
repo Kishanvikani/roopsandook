@@ -213,7 +213,7 @@ export function ProductCard({
                       ? "scale-110 border-brand-maroon ring-2 ring-brand-maroon/25"
                       : "border-border"
                   }`}
-                  style={{ backgroundColor: colourFor(variant.colour) }}
+                  style={colourStyleFor(variant.colour)}
                   title={variant.colour?.title || variant.sku}
                   aria-label={`Select ${variant.colour?.title || variant.sku}`}
                 />
@@ -274,25 +274,69 @@ function isVariantAvailable(variant) {
   return (variant.inventoryCount || 0) > 0 && variant.inStock !== false;
 }
 
-function colourFor(item) {
-  if (item?.hexCode) {
-    return item.hexCode;
+function colourStyleFor(item) {
+  const colours = coloursFor(item);
+
+  if (colours.length > 1) {
+    return {
+      background: `linear-gradient(90deg, ${colours[0]} 0 50%, ${colours[1]} 50% 100%)`,
+    };
   }
 
-  const slug = item?.slug || item?.title?.toLowerCase() || "";
+  return { backgroundColor: colours[0] || "#d6c3a2" };
+}
+
+function coloursFor(item) {
+  const title = item?.title || "";
+  const colourNames = title
+    .split(/\s*(?:&|\band\b|\/|\+|,)\s*/i)
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  if (colourNames.length > 1) {
+    return colourNames.slice(0, 2).map((name) => colourForName(name));
+  }
+
+  if (item?.hexCode) {
+    return [item.hexCode];
+  }
+
+  return [colourForName(item?.slug || title)];
+}
+
+function colourForName(name) {
+  const slug = name?.toLowerCase().trim().replace(/[\s_-]+/g, "-") || "";
   const fallback = {
     gold: "#c7952d",
+    golden: "#c7952d",
+    yellow: "#eab308",
+    turquoise: "#14b8a6",
     pearl: "#f3ead8",
     ruby: "#9f1239",
     maroon: "#7f1d1d",
     green: "#166534",
+    "light-green": "#86efac",
+    "dark-green": "#14532d",
+    lime: "#84cc16",
+    olive: "#708238",
     emerald: "#047857",
     silver: "#cbd5e1",
+    grey: "#9ca3af",
+    gray: "#9ca3af",
     black: "#111827",
     white: "#f8fafc",
+    ivory: "#fff7ed",
+    cream: "#fef3c7",
     red: "#dc2626",
+    orange: "#f97316",
     blue: "#2563eb",
+    "light-blue": "#93c5fd",
+    navy: "#1e3a8a",
     pink: "#db2777",
+    purple: "#9333ea",
+    violet: "#7c3aed",
+    brown: "#92400e",
+    beige: "#d6c3a2",
   };
 
   return fallback[slug] || "#d6c3a2";
