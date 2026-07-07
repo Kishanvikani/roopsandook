@@ -44,7 +44,7 @@ export default async function ShopPage({ searchParams }) {
       filters={effectiveFilters}
       products={productPage.products}
       totalProducts={productPage.total}
-      pageSize={productPage.limit}
+      pageSize={cataloguePageSize}
       hasMore={productPage.hasMore}
       categories={categories}
       collections={collections}

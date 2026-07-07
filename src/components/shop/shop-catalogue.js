@@ -5,11 +5,35 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
 
 import { ProductCard } from "@/components/product/product-card";
+import { getColorSwatchStyle } from "@/constants/colorMapper";
 import { formatPrice } from "@/services/catalogue";
 
 const maxPrice = 3000;
 const minPrice = 0;
 const defaultAvailability = ["in-stock", "sold-out"];
+const shopRestorePrefix = "roop-sandook:shop-restore:";
+
+function normalizeShopRestore(state) {
+  if (!state) {
+    return null;
+  }
+
+  const loadedCount = Math.max(
+    Number(state.loadedCount) || state.products?.length || 0,
+    0,
+  );
+  const scrollY = Math.max(Number(state.scrollY) || 0, 0);
+
+  if (!loadedCount && !scrollY) {
+    return null;
+  }
+
+  return {
+    loadedCount,
+    productSlug: state.productSlug || "",
+    scrollY,
+  };
+}
 
 export function ShopCatalogue({
   filters,
@@ -31,10 +55,19 @@ export function ShopCatalogue({
   const [loadedProducts, setLoadedProducts] = useState(products);
   const [canLoadMore, setCanLoadMore] = useState(hasMore);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isRestoringListing, setIsRestoringListing] = useState(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [loadError, setLoadError] = useState("");
   const loadMoreRef = useRef(null);
+  const loadedProductsRef = useRef(products);
+  const canLoadMoreRef = useRef(hasMore);
+  const isLoadingMoreRef = useRef(false);
+  const isRestoringListingRef = useRef(false);
+  const pendingRestoreRef = useRef(null);
+  const hasRestoredScrollRef = useRef(false);
   const currentQuery = searchParams.toString();
+  const currentQueryRef = useRef(currentQuery);
+  const pageSizeRef = useRef(pageSize);
   const [optimisticQuery, setOptimisticQuery] = useState(currentQuery);
   const optimisticParams = useMemo(
     () => new URLSearchParams(optimisticQuery),
@@ -55,7 +88,7 @@ export function ShopCatalogue({
     }),
     [filters, optimisticParams],
   );
-  const listingHref = currentQuery ? `/shop?${currentQuery}` : "/shop";
+  const listingHref = getListingHref(currentQuery);
   const parentCategories = categories.filter(
     (category) => !category.parentCategory,
   );
@@ -82,14 +115,169 @@ export function ShopCatalogue({
   const loadedCount = loadedProducts.length;
 
   useEffect(() => {
+    loadedProductsRef.current = loadedProducts;
+    canLoadMoreRef.current = canLoadMore;
+    isLoadingMoreRef.current = isLoadingMore;
+    isRestoringListingRef.current = isRestoringListing;
+    currentQueryRef.current = currentQuery;
+    pageSizeRef.current = pageSize;
+  }, [
+    canLoadMore,
+    currentQuery,
+    isLoadingMore,
+    isRestoringListing,
+    loadedProducts,
+    pageSize,
+  ]);
+
+  useEffect(() => {
     setOptimisticQuery(currentQuery);
   }, [currentQuery]);
 
   useEffect(() => {
+    const restoreState = normalizeShopRestore(readShopRestore(currentQuery));
+
     setLoadedProducts(products);
     setCanLoadMore(hasMore);
+    loadedProductsRef.current = products;
+    canLoadMoreRef.current = hasMore;
+
+    if (restoreState) {
+      pendingRestoreRef.current = restoreState;
+      hasRestoredScrollRef.current = false;
+    } else {
+      pendingRestoreRef.current = null;
+      hasRestoredScrollRef.current = false;
+    }
+
+    setIsRestoringListing(false);
     setLoadError("");
+    isRestoringListingRef.current = false;
   }, [products, hasMore, currentQuery]);
+
+  useEffect(() => {
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, []);
+
+  useEffect(() => {
+    const restoreState = pendingRestoreRef.current;
+
+    if (
+      !restoreState ||
+      hasRestoredScrollRef.current ||
+      isRestoringListingRef.current ||
+      loadedProducts.length >= restoreState.loadedCount
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function restoreLoadedPages() {
+      isRestoringListingRef.current = true;
+      setIsRestoringListing(true);
+      setLoadError("");
+
+      try {
+        let nextProducts = loadedProducts;
+        let nextCanLoadMore = canLoadMore;
+
+        while (
+          !cancelled &&
+          nextCanLoadMore &&
+          nextProducts.length < restoreState.loadedCount
+        ) {
+          const productPage = await fetchProductPage(
+            currentQuery,
+            nextProducts.length,
+            pageSize,
+          );
+          const existingSlugs = new Set(
+            nextProducts.map((product) => product.slug),
+          );
+          const newProducts = productPage.products.filter(
+            (product) => !existingSlugs.has(product.slug),
+          );
+
+          if (!newProducts.length) {
+            nextCanLoadMore = false;
+            break;
+          }
+
+          nextProducts = [...nextProducts, ...newProducts];
+          nextCanLoadMore = productPage.hasMore;
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setLoadedProducts(nextProducts);
+        setCanLoadMore(nextCanLoadMore);
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : "Unable to restore product position.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          isRestoringListingRef.current = false;
+          setIsRestoringListing(false);
+        }
+      }
+    }
+
+    restoreLoadedPages();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    canLoadMore,
+    currentQuery,
+    loadedProducts,
+    pageSize,
+  ]);
+
+  useEffect(() => {
+    const restoreState = pendingRestoreRef.current;
+
+    if (!restoreState || hasRestoredScrollRef.current || isRestoringListing) {
+      return;
+    }
+
+    const productIsLoaded = loadedProducts.some(
+      (product) => product.slug === restoreState.productSlug,
+    );
+    const loadedFarEnough = loadedProducts.length >= restoreState.loadedCount;
+
+    if (!loadedFarEnough && !productIsLoaded) {
+      return;
+    }
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        window.scrollTo(0, restoreState.scrollY);
+        hasRestoredScrollRef.current = true;
+        pendingRestoreRef.current = null;
+        writeShopRestore(currentQuery, {
+          loadedCount: loadedProducts.length,
+          canLoadMore,
+          scrollY: restoreState.scrollY,
+        });
+      });
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [canLoadMore, currentQuery, isRestoringListing, loadedProducts]);
 
   useEffect(() => {
     setPriceValues({
@@ -116,7 +304,13 @@ export function ShopCatalogue({
   useEffect(() => {
     const sentinel = loadMoreRef.current;
 
-    if (!sentinel || !canLoadMore || isLoadingMore || isPending) {
+    if (
+      !sentinel ||
+      !canLoadMore ||
+      isLoadingMore ||
+      isPending ||
+      isRestoringListing
+    ) {
       return;
     }
 
@@ -132,7 +326,14 @@ export function ShopCatalogue({
     observer.observe(sentinel);
 
     return () => observer.disconnect();
-  }, [canLoadMore, isLoadingMore, isPending, currentQuery, loadedCount]);
+  }, [
+    canLoadMore,
+    isLoadingMore,
+    isPending,
+    isRestoringListing,
+    currentQuery,
+    loadedCount,
+  ]);
 
   useEffect(() => {
     function handleKeyDown(event) {
@@ -153,7 +354,10 @@ export function ShopCatalogue({
   }, [isFilterDrawerOpen]);
 
   function navigate(nextParams) {
+    nextParams.delete("loaded");
     const query = nextParams.toString();
+    removeShopRestore(currentQuery);
+    removeShopRestore(query);
     setOptimisticQuery(query);
     startTransition(() => {
       router.replace(query ? `/shop?${query}` : "/shop", { scroll: false });
@@ -266,35 +470,58 @@ export function ShopCatalogue({
   }
 
   function resetFilters() {
+    removeShopRestore(currentQuery);
     setOptimisticQuery("");
     startTransition(() => {
       router.replace("/shop", { scroll: false });
     });
   }
 
+  function rememberProductPosition(product) {
+    const restoreQuery = getListingQuery(currentQuery);
+    const restoreState = {
+      loadedCount: loadedProducts.length,
+      canLoadMore,
+      productSlug: product.slug,
+      scrollY: window.scrollY,
+    };
+
+    writeShopRestore(currentQuery, restoreState);
+    writeShopRestore(restoreQuery, restoreState);
+  }
+
   async function loadNextPage() {
-    if (isLoadingMore || !canLoadMore) {
+    if (
+      isLoadingMoreRef.current ||
+      isRestoringListingRef.current ||
+      !canLoadMoreRef.current
+    ) {
       return;
     }
 
+    isLoadingMoreRef.current = true;
     setIsLoadingMore(true);
     setLoadError("");
 
     try {
-      const nextParams = new URLSearchParams(currentQuery);
-      nextParams.set("offset", String(loadedProducts.length));
-      nextParams.set("limit", String(pageSize));
-      const response = await fetch(`/api/catalogue?${nextParams.toString()}`);
+      const productPage = await fetchProductPage(
+        currentQueryRef.current,
+        loadedProductsRef.current.length,
+        pageSizeRef.current,
+      );
+      setLoadedProducts((currentProducts) => {
+        const existingSlugs = new Set(
+          currentProducts.map((product) => product.slug),
+        );
+        const newProducts = productPage.products.filter(
+          (product) => !existingSlugs.has(product.slug),
+        );
+        const nextProducts = [...currentProducts, ...newProducts];
 
-      if (!response.ok) {
-        throw new Error("Unable to load more products.");
-      }
-
-      const productPage = await response.json();
-      setLoadedProducts((currentProducts) => [
-        ...currentProducts,
-        ...productPage.products,
-      ]);
+        loadedProductsRef.current = nextProducts;
+        return nextProducts;
+      });
+      canLoadMoreRef.current = productPage.hasMore;
       setCanLoadMore(productPage.hasMore);
     } catch (error) {
       setLoadError(
@@ -303,6 +530,7 @@ export function ShopCatalogue({
           : "Unable to load more products.",
       );
     } finally {
+      isLoadingMoreRef.current = false;
       setIsLoadingMore(false);
     }
   }
@@ -375,19 +603,21 @@ export function ShopCatalogue({
             {loadedProducts.length ? (
               <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
                 {loadedProducts.map((product, index) => (
-                  <ProductCard
-                    key={product.slug}
-                    product={product}
-                    listingHref={listingHref}
-                    compact
-                    visualType={
-                      index % 3 === 0
-                        ? "bangle"
-                        : index % 2 === 0
-                          ? "necklace"
-                          : "earrings"
-                    }
-                  />
+                  <div key={product.slug} data-product-slug={product.slug}>
+                    <ProductCard
+                      product={product}
+                      listingHref={listingHref}
+                      compact
+                      onProductOpen={rememberProductPosition}
+                      visualType={
+                        index % 3 === 0
+                          ? "bangle"
+                          : index % 2 === 0
+                            ? "necklace"
+                            : "earrings"
+                      }
+                    />
+                  </div>
                 ))}
               </div>
             ) : (
@@ -733,7 +963,7 @@ function CheckboxGroup({
           {colourSwatches ? (
             <span
               className="h-3 w-3 rounded-full border border-border"
-              style={{ backgroundColor: colourFor(item) }}
+              style={getColorSwatchStyle(item)}
               aria-hidden="true"
             />
           ) : null}
@@ -867,26 +1097,75 @@ function unique(items) {
   return Array.from(new Set(items));
 }
 
-function colourFor(item) {
-  if (item.hexCode) {
-    return item.hexCode;
+function getListingHref(query) {
+  const listingQuery = getListingQuery(query);
+  return listingQuery ? `/shop?${listingQuery}` : "/shop";
+}
+
+function getListingQuery(query) {
+  const params = new URLSearchParams(query);
+  params.delete("offset");
+  params.delete("limit");
+  params.delete("loaded");
+
+  return params.toString();
+}
+
+async function fetchProductPage(query, offset, limit) {
+  const nextParams = new URLSearchParams(query);
+  nextParams.delete("loaded");
+  nextParams.set("offset", String(offset));
+  nextParams.set("limit", String(limit));
+  const response = await fetch(`/api/catalogue?${nextParams.toString()}`);
+
+  if (!response.ok) {
+    throw new Error("Unable to load more products.");
   }
 
-  const slug = item.slug || item.title?.toLowerCase() || "";
-  const fallback = {
-    gold: "#c7952d",
-    pearl: "#f3ead8",
-    ruby: "#9f1239",
-    maroon: "#7f1d1d",
-    green: "#166534",
-    emerald: "#047857",
-    silver: "#cbd5e1",
-    black: "#111827",
-    white: "#f8fafc",
-    red: "#dc2626",
-    blue: "#2563eb",
-    pink: "#db2777",
-  };
+  return response.json();
+}
 
-  return fallback[slug] || "#d6c3a2";
+function getShopRestoreKey(query) {
+  const params = new URLSearchParams(query);
+  params.delete("offset");
+  params.delete("limit");
+  params.delete("loaded");
+  const entries = Array.from(params.entries()).sort(([nameA, valueA], [
+    nameB,
+    valueB,
+  ]) => {
+    if (nameA === nameB) {
+      return valueA.localeCompare(valueB);
+    }
+
+    return nameA.localeCompare(nameB);
+  });
+  const normalizedQuery = new URLSearchParams(entries).toString();
+
+  return `${shopRestorePrefix}${normalizedQuery || "all"}`;
+}
+
+function readShopRestore(query) {
+  try {
+    const stored = sessionStorage.getItem(getShopRestoreKey(query));
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+function removeShopRestore(query) {
+  try {
+    sessionStorage.removeItem(getShopRestoreKey(query));
+  } catch {
+    // Best effort only; storage may be unavailable.
+  }
+}
+
+function writeShopRestore(query, state) {
+  try {
+    sessionStorage.setItem(getShopRestoreKey(query), JSON.stringify(state));
+  } catch {
+    // Best effort only; storage may be unavailable or full.
+  }
 }

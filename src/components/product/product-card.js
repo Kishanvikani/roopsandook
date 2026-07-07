@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 
 import { useCommerce } from "@/components/commerce/commerce-provider";
 import { JewelleryPlaceholder } from "@/components/product/jewellery-placeholder";
+import { getColorSwatchStyle } from "@/constants/colorMapper";
 
 export function ProductCard({
   product,
@@ -14,6 +15,7 @@ export function ProductCard({
   listingHref = "/shop",
   initialSku,
   compact = false,
+  onProductOpen,
 }) {
   const {
     addToBag,
@@ -40,7 +42,9 @@ export function ProductCard({
   const selectedCompareAtPrice =
     selectedVariant?.compareAtPrice ?? product.compareAtPrice;
   const selectedColour = selectedVariant?.colour?.title || "Default";
-  const stockLimit = selectedVariant?.inventoryCount || product.totalInventory || 1;
+  const stockLimit = selectedVariant
+    ? getVariantStockLimit(selectedVariant)
+    : product.totalInventory || 0;
   const wishlisted = selectedVariant
     ? isWishlisted(product.id, selectedVariant.sku)
     : false;
@@ -115,10 +119,14 @@ export function ProductCard({
     );
   }
 
+  function handleProductOpen() {
+    onProductOpen?.(product);
+  }
+
   return (
     <article className="group bg-background">
       <div className="relative">
-        <Link href={productHref} aria-label={product.name}>
+        <Link href={productHref} aria-label={product.name} onClick={handleProductOpen}>
           {selectedImage?.url ? (
             <div className="relative aspect-[4/5] overflow-hidden bg-brand-ivory">
               <Image
@@ -176,7 +184,9 @@ export function ProductCard({
             compact ? "text-sm leading-5" : "text-md leading-6"
           }`}
         >
-          <Link href={productHref}>{product.name}</Link>
+          <Link href={productHref} onClick={handleProductOpen}>
+            {product.name}
+          </Link>
         </h3>
         <div className="mt-2 flex items-center justify-between gap-2">
           <div>
@@ -213,7 +223,7 @@ export function ProductCard({
                       ? "scale-110 border-brand-maroon ring-2 ring-brand-maroon/25"
                       : "border-border"
                   }`}
-                  style={colourStyleFor(variant.colour)}
+                  style={getColorSwatchStyle(variant.colour)}
                   title={variant.colour?.title || variant.sku}
                   aria-label={`Select ${variant.colour?.title || variant.sku}`}
                 />
@@ -226,7 +236,7 @@ export function ProductCard({
             </div>
           </div>
         ) : null}
-        {bagItem ? (
+        {selectedVariantAvailable && bagItem ? (
           <div
             className={`mt-4 grid w-full grid-cols-[auto_1fr_auto] border border-brand-maroon text-brand-maroon ${
               compact ? "h-9" : "h-10"
@@ -271,75 +281,11 @@ export function ProductCard({
 }
 
 function isVariantAvailable(variant) {
-  return (variant.inventoryCount || 0) > 0 && variant.inStock !== false;
+  return getVariantStockLimit(variant) > 0 && variant.inStock !== false;
 }
 
-function colourStyleFor(item) {
-  const colours = coloursFor(item);
-
-  if (colours.length > 1) {
-    return {
-      background: `linear-gradient(90deg, ${colours[0]} 0 50%, ${colours[1]} 50% 100%)`,
-    };
-  }
-
-  return { backgroundColor: colours[0] || "#d6c3a2" };
-}
-
-function coloursFor(item) {
-  const title = item?.title || "";
-  const colourNames = title
-    .split(/\s*(?:&|\band\b|\/|\+|,)\s*/i)
-    .map((name) => name.trim())
-    .filter(Boolean);
-
-  if (colourNames.length > 1) {
-    return colourNames.slice(0, 2).map((name) => colourForName(name));
-  }
-
-  if (item?.hexCode) {
-    return [item.hexCode];
-  }
-
-  return [colourForName(item?.slug || title)];
-}
-
-function colourForName(name) {
-  const slug = name?.toLowerCase().trim().replace(/[\s_-]+/g, "-") || "";
-  const fallback = {
-    gold: "#c7952d",
-    golden: "#c7952d",
-    yellow: "#eab308",
-    turquoise: "#14b8a6",
-    pearl: "#f3ead8",
-    ruby: "#9f1239",
-    maroon: "#7f1d1d",
-    green: "#166534",
-    "light-green": "#86efac",
-    "dark-green": "#14532d",
-    lime: "#84cc16",
-    olive: "#708238",
-    emerald: "#047857",
-    silver: "#cbd5e1",
-    grey: "#9ca3af",
-    gray: "#9ca3af",
-    black: "#111827",
-    white: "#f8fafc",
-    ivory: "#fff7ed",
-    cream: "#fef3c7",
-    red: "#dc2626",
-    orange: "#f97316",
-    blue: "#2563eb",
-    "light-blue": "#93c5fd",
-    navy: "#1e3a8a",
-    pink: "#db2777",
-    purple: "#9333ea",
-    violet: "#7c3aed",
-    brown: "#92400e",
-    beige: "#d6c3a2",
-  };
-
-  return fallback[slug] || "#d6c3a2";
+function getVariantStockLimit(variant) {
+  return Math.max(Number(variant?.inventoryCount) || 0, 0);
 }
 
 function formatCardPrice(price, fallback = "Price on request") {

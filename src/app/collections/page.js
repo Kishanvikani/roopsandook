@@ -21,6 +21,7 @@ export default async function CollectionsPage() {
             eyebrow="Explore"
             title="Shop by Collection"
             description="Choose a jewellery category to see matching Roop Sandook products."
+            action={{ label: "View all", href: "/shop" }}
           />
           {parentCategories.length ? (
             <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
