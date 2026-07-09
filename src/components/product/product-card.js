@@ -44,6 +44,10 @@ export function ProductCard({
   const selectedCompareAtPrice =
     selectedVariant?.compareAtPrice ?? product.compareAtPrice;
   const selectedColour = selectedVariant?.colour?.title || "Default";
+  const materialLabel =
+    product.materials?.map((material) => material.title).filter(Boolean).join(", ") ||
+    product.material ||
+    "Ready to style";
   const stockLimit = selectedVariant
     ? getVariantStockLimit(selectedVariant)
     : product.totalInventory || 0;
@@ -205,8 +209,11 @@ export function ProductCard({
               </p>
             ) : null}
           </div>
-          <p className="truncate text-right text-xs text-muted-foreground">
-            {product.materials?.[0]?.title || product.material || "Ready to style"}
+          <p
+            className="min-w-0 truncate text-right text-xs text-muted-foreground"
+            title={materialLabel}
+          >
+            {materialLabel}
           </p>
         </div>
         {variantDots.length ? (
