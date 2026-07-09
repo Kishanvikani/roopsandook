@@ -85,7 +85,7 @@ export function BagClient({ products }) {
     <section className="px-4 py-14 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[1fr_380px]">
         <div>
-          <h1 className="font-display text-4xl font-semibold text-foreground">
+          <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight text-brand-maroon sm:text-5xl">
             Review Your Pieces
           </h1>
 

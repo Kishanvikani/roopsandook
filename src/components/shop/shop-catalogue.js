@@ -572,7 +572,7 @@ export function ShopCatalogue({
 
         <div className="relative">
           <div className="flex items-center justify-between gap-4">
-            <h1 className="font-display text-3xl font-semibold text-brand-maroon">
+            <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight text-brand-maroon sm:text-5xl">
               Traditional Jewellery
             </h1>
             <button

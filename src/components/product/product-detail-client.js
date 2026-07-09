@@ -183,9 +183,9 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
         </div>
 
         <div>
-          <h3 className="font-display text-3xl font-semibold leading-tight text-foreground">
+          <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight text-brand-maroon sm:text-5xl">
             {product.name}
-          </h3>
+          </h1>
           {selectedVariant?.sku ? (
             <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon/65">
               SKU: {selectedVariant.sku}

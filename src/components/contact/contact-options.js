@@ -51,9 +51,9 @@ export function ContactOptions() {
     <section className="px-4 py-14 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-7xl">
         <div className="max-w-3xl">
-          <h2 className="font-display text-3xl font-semibold text-foreground sm:text-4xl">
+          <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight text-brand-maroon sm:text-5xl">
             Get in Touch
-          </h2>
+          </h1>
           <p className="mt-4 text-sm leading-7 text-muted-foreground">
             For product inquiries, order updates, shipping assistance, or
             general support, we're here to help. Reach out anytime, and we'll

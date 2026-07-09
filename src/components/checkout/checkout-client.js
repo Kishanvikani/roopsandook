@@ -168,7 +168,7 @@ export function CheckoutClient({ products }) {
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-maroon">
             Order shared
           </p>
-          <h1 className="font-display mt-3 text-4xl font-semibold text-brand-maroon">
+          <h1 className="font-display mt-3 text-4xl font-semibold leading-tight text-brand-maroon sm:text-5xl">
             Thank you for shopping with us
           </h1>
           <p className="mt-4 text-sm leading-7 text-brand-maroon/75">
@@ -200,7 +200,7 @@ export function CheckoutClient({ products }) {
 
         <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_380px]">
           <div>
-            <h1 className="font-display text-4xl font-semibold text-foreground">
+            <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight text-brand-maroon sm:text-5xl">
               Checkout
             </h1>
             {rows.length ? (

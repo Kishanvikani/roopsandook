@@ -28,7 +28,7 @@ export function WishlistClient({ products }) {
     return (
       <section className="px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl border border-border bg-brand-ivory p-8 text-center">
-          <h1 className="font-display text-3xl font-semibold text-brand-maroon">
+          <h1 className="font-display text-4xl font-semibold leading-tight text-brand-maroon sm:text-5xl">
             Your wishlist is empty
           </h1>
           <p className="mt-3 text-sm leading-6 text-brand-maroon/75">
@@ -51,7 +51,7 @@ export function WishlistClient({ products }) {
       <div className="mx-auto w-full max-w-7xl">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <h1 className="font-display text-4xl font-semibold text-foreground">
+            <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight text-brand-maroon sm:text-5xl">
               Saved Pieces
             </h1>
           </div>
