@@ -76,6 +76,34 @@ const productProjection = `{
   }
 }`;
 
+const singleColourSlugs = new Set([
+  "black",
+  "blue",
+  "gold",
+  "golden",
+  "green",
+  "light-green",
+  "light-pink",
+  "mint",
+  "moti",
+  "peach",
+  "peacock-blue",
+  "pink",
+  "purple",
+  "rani-pink",
+  "red",
+  "rodo-green",
+  "ruby",
+  "silver",
+  "turquoise",
+  "white",
+  "yellow",
+]);
+
+const singleColourTitles = Array.from(singleColourSlugs).map((slug) =>
+  slug.replace(/-/g, " "),
+);
+
 export async function getCatalogueFiltersData() {
   if (!hasSanityConfig) {
     return {
@@ -94,7 +122,15 @@ export async function getCatalogueFiltersData() {
           "slug": slug.current,
           description,
           "parentCategory": parentCategory->{title, "slug": slug.current},
-          "image": image.asset->url
+          "image": image.asset->url,
+          "count": count(*[
+            _type == "product" &&
+            defined(slug.current) &&
+            (
+              category._ref == ^._id ||
+              category->parentCategory._ref == ^._id
+            )
+          ])
         }`,
       {},
       { next: { revalidate: 60 } },
@@ -136,7 +172,7 @@ export async function getCatalogueFiltersData() {
   return {
     categories: normalizeCategories(categories),
     collections,
-    colours,
+    colours: normalizeColourFilters(colours),
     materials,
   };
 }
@@ -388,7 +424,10 @@ export function filterProducts(products, filters) {
 
       if (
         colours.length > 0 &&
-        !product.colours.some((item) => colours.includes(item.slug))
+        !product.colours.some((item) => colours.includes(item.slug)) &&
+        !product.variants.some((variant) =>
+          colourMatchesSelection(variant.colour, colours),
+        )
       ) {
         return false;
       }
@@ -513,8 +552,14 @@ function buildProductFilterQuery(filters = {}) {
   }
 
   if (colours.length) {
-    conditions.push(`count((variants[].colour->slug.current)[@ in $colours]) > 0`);
-    params.colours = colours;
+    conditions.push(`(
+      count((variants[].colour->slug.current)[@ match $colourSlugPatterns]) > 0 ||
+      count((variants[].colour->title)[@ match $colourTitlePatterns]) > 0
+    )`);
+    params.colourSlugPatterns = colours.map((colour) => `*${colour}*`);
+    params.colourTitlePatterns = colours.map(
+      (colour) => `*${colour.replace(/-/g, " ")}*`,
+    );
   }
 
   if (materials.length) {
@@ -605,7 +650,7 @@ function normalizeProduct(product) {
   const images = [...(product.images || []), ...variantImages].filter(
     (image) => image?.url,
   );
-  const colours = uniqueBySlug(
+  const colours = normalizeColourFilters(
     variants.map((variant) => variant.colour).filter(Boolean),
   );
   const totalInventory = variants.reduce(
@@ -674,17 +719,78 @@ function normalizeCategories(categories) {
   }));
 }
 
-function uniqueBySlug(items) {
-  const seen = new Set();
+function normalizeColourFilters(colours) {
+  const colourMap = new Map();
 
-  return items.filter((item) => {
-    if (!item?.slug || seen.has(item.slug)) {
-      return false;
+  for (const colour of colours || []) {
+    for (const title of splitColourTitle(colour?.title || colour?.slug)) {
+      const slug = slugifyColour(title);
+
+      if (!slug || colourMap.has(slug)) {
+        continue;
+      }
+
+      colourMap.set(slug, {
+        _id: colour?._id ? `${colour._id}-${slug}` : slug,
+        title: toTitleCase(title),
+        slug,
+      });
     }
+  }
 
-    seen.add(item.slug);
-    return true;
-  });
+  return Array.from(colourMap.values()).sort((a, b) =>
+    a.title.localeCompare(b.title),
+  );
+}
+
+function colourMatchesSelection(colour, selectedColours) {
+  const colourSlugs = splitColourTitle(colour?.title || colour?.slug).map(
+    slugifyColour,
+  );
+
+  return selectedColours.some((selectedColour) =>
+    colourSlugs.includes(selectedColour),
+  );
+}
+
+function splitColourTitle(value) {
+  const title = String(value || "").trim();
+  const delimitedParts = title
+    .replace(/-/g, " ")
+    .split(/\s*(?:&|\band\b|\/|\+|,)\s*/i)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (delimitedParts.length > 1) {
+    return delimitedParts;
+  }
+
+  const normalizedTitle = slugifyColour(title);
+
+  if (singleColourSlugs.has(normalizedTitle)) {
+    return [title];
+  }
+
+  const paddedTitle = ` ${title.toLowerCase().replace(/-/g, " ")} `;
+  const matchedColours = singleColourTitles.filter((colourTitle) =>
+    paddedTitle.includes(` ${colourTitle} `),
+  );
+
+  return matchedColours.length ? matchedColours : delimitedParts;
+}
+
+function slugifyColour(value) {
+  return String(value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function toTitleCase(value) {
+  return String(value || "")
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 function sortProducts(a, b, sort = "newest") {

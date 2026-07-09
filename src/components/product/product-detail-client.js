@@ -40,12 +40,13 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
     : product.totalInventory || 0;
   const galleryImages = useMemo(
     () => {
-      const images = selectedVariant?.images?.length
-        ? selectedVariant.images
+      const images = selectedVariant
+        ? selectedVariant.images || []
         : product.images || [];
 
       return images.filter((image, index, imageList) =>
-        image?.url && images.findIndex((item) => item.url === image.url) === index,
+        image?.url &&
+          imageList.findIndex((item) => item.url === image.url) === index,
       );
     },
     [product.images, selectedVariant],

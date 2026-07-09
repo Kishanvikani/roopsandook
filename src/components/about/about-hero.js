@@ -1,21 +1,20 @@
-import { BrandLogo } from "@/components/common/brand-logo";
+import Image from "next/image";
+
+import aboutImage from "@/assets/images/about-us.png";
 
 export function AboutHero() {
   return (
     <section className="px-4 py-14 sm:px-6 lg:px-8">
-      <div className="mx-auto grid w-full max-w-7xl gap-10 md:grid-cols-[0.95fr_1.05fr] md:items-center">
-        <div className="bg-brand-maroon p-4">
-          <div className="grid min-h-80 place-items-center border border-brand-ivory/35 px-6 text-center text-brand-ivory">
-            <div>
-              <div className="flex justify-center">
-                <BrandLogo variant="small" className="h-20 w-20" />
-              </div>
-              <p className="font-display mt-5 text-6xl font-semibold">2026</p>
-              <p className="mt-4 text-sm uppercase tracking-[0.22em]">
-                Tradition in every detail
-              </p>
-            </div>
-          </div>
+      <div className="mx-auto grid w-full max-w-7xl items-stretch gap-8 md:grid-cols-[0.95fr_1.05fr]">
+        <div className="relative min-h-80 overflow-hidden bg-brand-ivory">
+          <Image
+            src={aboutImage}
+            alt="Roop Sandook jewellery collection"
+            fill
+            priority
+            sizes="(min-width: 768px) 46vw, 100vw"
+            className="object-cover object-center"
+          />
         </div>
 
         <div>

@@ -37,7 +37,9 @@ export function ProductCard({
   const selectedVariantAvailable = selectedVariant
     ? isVariantAvailable(selectedVariant)
     : product.inStock !== false;
-  const selectedImage = selectedVariant?.images?.[0] || product.image;
+  const selectedImage = selectedVariant
+    ? selectedVariant.images?.[0] || null
+    : product.image;
   const selectedPrice = selectedVariant?.price ?? product.price;
   const selectedCompareAtPrice =
     selectedVariant?.compareAtPrice ?? product.compareAtPrice;

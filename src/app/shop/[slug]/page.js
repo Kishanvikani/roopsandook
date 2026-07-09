@@ -90,15 +90,15 @@ export default async function ProductDetailPage({ params, searchParams }) {
       {relatedProducts.length ? (
         <section className="px-4 pb-14 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-7xl border-t border-border pt-10">
-            <div className="flex items-end justify-between gap-4">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="font-display text-3xl font-semibold text-foreground">
+                <h2 className="font-display text-2xl font-semibold text-foreground sm:text-3xl">
                   You may also like
                 </h2>
               </div>
               <Link
                 href={backHref}
-                className="text-sm font-semibold uppercase tracking-wide text-brand-maroon hover:text-brand-maroon/75"
+                className="shrink-0 text-sm font-semibold uppercase tracking-wide text-brand-maroon hover:text-brand-maroon/75"
               >
                 View all
               </Link>

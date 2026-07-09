@@ -6,7 +6,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import contactImage from "@/assets/images/hero-image-2.png";
+import contactImage from "@/assets/images/contect-us.jpeg";
 import {
   contactDetails,
   formatIndianPhone,

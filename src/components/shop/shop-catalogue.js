@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SlidersHorizontal, X } from "lucide-react";
+import { ArrowUp, SlidersHorizontal, X } from "lucide-react";
 
 import { ProductCard } from "@/components/product/product-card";
 import { getColorSwatchStyle } from "@/constants/colorMapper";
@@ -57,6 +57,7 @@ export function ShopCatalogue({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isRestoringListing, setIsRestoringListing] = useState(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const [loadError, setLoadError] = useState("");
   const loadMoreRef = useRef(null);
   const loadedProductsRef = useRef(products);
@@ -353,6 +354,17 @@ export function ShopCatalogue({
     };
   }, [isFilterDrawerOpen]);
 
+  useEffect(() => {
+    function handleScroll() {
+      setShowBackToTop(window.scrollY > 700);
+    }
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   function navigate(nextParams) {
     nextParams.delete("loaded");
     const query = nextParams.toString();
@@ -488,6 +500,10 @@ export function ShopCatalogue({
 
     writeShopRestore(currentQuery, restoreState);
     writeShopRestore(restoreQuery, restoreState);
+  }
+
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function loadNextPage() {
@@ -747,6 +763,17 @@ export function ShopCatalogue({
           </aside>
         </div>
       ) : null}
+
+      {showBackToTop ? (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          className="fixed bottom-24 right-5 z-40 inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-brand-maroon bg-background px-4 text-xs font-semibold uppercase tracking-wide text-brand-maroon shadow-lg shadow-brand-maroon/15 transition-colors hover:bg-brand-maroon hover:text-brand-ivory"
+          aria-label="Back to top"
+        >
+          <ArrowUp size={16} aria-hidden="true" />
+        </button>
+      ) : null}
     </section>
   );
 }
@@ -967,7 +994,10 @@ function CheckboxGroup({
               aria-hidden="true"
             />
           ) : null}
-          <span>{item.title}</span>
+          <span>
+            {item.title}
+            {typeof item.count === "number" ? ` (${item.count})` : ""}
+          </span>
         </label>
       ))}
     </div>
