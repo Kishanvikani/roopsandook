@@ -321,6 +321,10 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
                 label="Sub-Category"
                 value={product.childCategory?.title}
               />
+              <DetailBlock
+                label="Size"
+                value={product.size}
+              />
             </div>
             {product.careInstructions ? (
               <DetailBlock
@@ -349,7 +353,7 @@ function DetailBlock({ label, value, className = "" }) {
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-maroon/65">
         {label}
       </p>
-      <p className="mt-2 text-sm text-foreground">{value || "Not specified"}</p>
+      <p className="mt-2 text-sm text-foreground">{value || "-"}</p>
     </div>
   );
 }

@@ -23,9 +23,6 @@ export default async function CollectionsPage() {
               <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight text-brand-maroon sm:text-5xl">
                 Shop by Collection
               </h1>
-              <p className="mt-5 max-w-2xl text-sm leading-7 text-brand-maroon/75">
-                Choose a jewellery category to see matching Roop Sandook products.
-              </p>
             </div>
             <Link
               href="/shop"

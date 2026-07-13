@@ -2,6 +2,7 @@ export const colorHexMap = {
   black: "#000000",
   "black-and-ruby": ["#000000", "#9B111E"],
 
+  blue: "#1D4ED8",
   "blue-and-turquoise": ["#1E3A8A", "#40E0D0"],
 
   gold: "#D4AF37",
@@ -11,13 +12,15 @@ export const colorHexMap = {
   "green-and-red": ["#228B22", "#C41E3A"],
   "green-and-ruby": ["#228B22", "#9B111E"],
 
-  "light-green-and-pink": ["#90EE90", "#FFC0CB"],
-  "light-green-and-ruby": ["#90EE90", "#9B111E"],
+  "light-green": "#7ED957",
+  "light-green-and-pink": ["#7ED957", "#FFC0CB"],
+  "light-green-and-ruby": ["#7ED957", "#9B111E"],
 
   "light-pink": "#FFB6C1",
 
-  mint: "#98FF98",
-  "mint-ruby": ["#98FF98", "#9B111E"],
+  mint: "#98F5D0",
+  "mint-ruby": ["#98F5D0", "#9B111E"],
+  moti: "#F8F8FF",
 
   peach: "#FFDAB9",
 

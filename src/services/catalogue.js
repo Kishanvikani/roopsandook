@@ -9,6 +9,7 @@ const productCardProjection = `{
   name,
   "slug": slug.current,
   shortDescription,
+  size,
   isFeatured,
   isNewArrival,
   seoTitle,
@@ -45,6 +46,7 @@ const productProjection = `{
   "slug": slug.current,
   shortDescription,
   description,
+  size,
   careInstructions,
   shippingInfo,
   isFeatured,
@@ -552,14 +554,19 @@ function buildProductFilterQuery(filters = {}) {
   }
 
   if (colours.length) {
-    conditions.push(`(
-      count((variants[].colour->slug.current)[@ match $colourSlugPatterns]) > 0 ||
-      count((variants[].colour->title)[@ match $colourTitlePatterns]) > 0
-    )`);
-    params.colourSlugPatterns = colours.map((colour) => `*${colour}*`);
-    params.colourTitlePatterns = colours.map(
-      (colour) => `*${colour.replace(/-/g, " ")}*`,
-    );
+    const colourConditions = colours.map((colour, index) => {
+      const slugParam = `colourSlugPattern${index}`;
+      const titleParam = `colourTitlePattern${index}`;
+      params[slugParam] = `*${colour}*`;
+      params[titleParam] = `*${colour.replace(/-/g, " ")}*`;
+
+      return `(
+        count((variants[].colour->slug.current)[@ match $${slugParam}]) > 0 ||
+        count((variants[].colour->title)[@ match $${titleParam}]) > 0
+      )`;
+    });
+
+    conditions.push(`(${colourConditions.join(" || ")})`);
   }
 
   if (materials.length) {
@@ -680,6 +687,7 @@ function normalizeProduct(product) {
     slug: product.slug,
     shortDescription: product.shortDescription,
     description: product.description,
+    size: product.size,
     careInstructions: product.careInstructions,
     shippingInfo: product.shippingInfo,
     category,

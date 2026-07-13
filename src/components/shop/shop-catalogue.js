@@ -434,6 +434,22 @@ export function ShopCatalogue({
     navigate(next);
   }
 
+  function setSingleParam(name, value) {
+    const next = new URLSearchParams(optimisticQuery);
+
+    next.delete(name);
+
+    if (value) {
+      next.set(name, value);
+    }
+
+    if (name === "parentCategory") {
+      next.delete("category");
+    }
+
+    navigate(next);
+  }
+
   function toggleAvailability(value, checked) {
     const next = new URLSearchParams(optimisticQuery);
     const selected = new Set(uiFilters.availability);
@@ -563,6 +579,7 @@ export function ShopCatalogue({
             priceValues={priceValues}
             selectedParentCategories={selectedParentCategories}
             setPriceValues={setPriceValues}
+            setSingleParam={setSingleParam}
             toggleAvailability={toggleAvailability}
             toggleParam={toggleParam}
             uiFilters={uiFilters}
@@ -742,6 +759,7 @@ export function ShopCatalogue({
                   priceValues={priceValues}
                   selectedParentCategories={selectedParentCategories}
                   setPriceValues={setPriceValues}
+                  setSingleParam={setSingleParam}
                   toggleAvailability={toggleAvailability}
                   toggleParam={toggleParam}
                   uiFilters={uiFilters}
@@ -788,6 +806,7 @@ function ShopFilters({
   priceValues,
   selectedParentCategories,
   setPriceValues,
+  setSingleParam,
   toggleAvailability,
   toggleParam,
   uiFilters,
@@ -800,11 +819,11 @@ function ShopFilters({
 
       <div className={hideTitle ? "space-y-4" : "mt-5 space-y-4"}>
         <FilterAccordion title="Category" defaultOpen>
-          <CheckboxGroup
+          <RadioGroup
             name="parentCategory"
             items={parentCategories}
-            selected={selectedParentCategories}
-            onToggle={toggleParam}
+            selected={selectedParentCategories[0] || ""}
+            onSelect={setSingleParam}
             idPrefix={idPrefix}
           />
         </FilterAccordion>
@@ -952,6 +971,48 @@ function FilterAccordion({ title, children, defaultOpen = false }) {
       </summary>
       <div className="mt-3 max-h-52 overflow-y-auto pr-1">{children}</div>
     </details>
+  );
+}
+
+function RadioGroup({
+  name,
+  items,
+  selected,
+  onSelect,
+  idPrefix,
+}) {
+  if (!items.length) {
+    return (
+      <p className="text-sm leading-6 text-muted-foreground">
+        No options available.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-3">
+      {items.map((item) => (
+        <label
+          key={item.slug}
+          htmlFor={`${idPrefix}-${name}-${item.slug}`}
+          className="flex cursor-pointer items-center gap-3 text-sm text-foreground"
+        >
+          <input
+            id={`${idPrefix}-${name}-${item.slug}`}
+            type="radio"
+            name={`${idPrefix}-${name}`}
+            value={item.slug}
+            checked={selected === item.slug}
+            onChange={() => onSelect(name, item.slug)}
+            className="h-4 w-4 cursor-pointer border-border accent-brand-maroon"
+          />
+          <span>
+            {item.title}
+            {typeof item.count === "number" ? ` (${item.count})` : ""}
+          </span>
+        </label>
+      ))}
+    </div>
   );
 }
 
