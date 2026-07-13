@@ -135,6 +135,7 @@ export function CheckoutClient({ products }) {
           `- *${index + 1}. ${row.product.name}*`,
           `  SKU: ${row.variant.sku}`,
           `  Colour: ${row.variant.colour?.title || "Default"}`,
+          `  Size: ${getRowSize(row)}`,
           `  Qty: ${quantity}`,
           `  Line total: ${formatPrice(price * quantity)}`,
           `  Unit price: ${formatPrice(price)}`,
@@ -405,6 +406,10 @@ function SummaryLine({ label, value, strong = false }) {
 
 function getStockLimit(row) {
   return row.variant.inventoryCount || row.product.totalInventory || 1;
+}
+
+function getRowSize(row) {
+  return row.variant.size || row.product.size || "-";
 }
 
 function getCity(customer) {

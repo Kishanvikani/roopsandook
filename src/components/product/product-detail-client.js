@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  Heart,
   Minus,
   Plus,
 } from "lucide-react";
@@ -29,6 +28,20 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
   const [quantity, setQuantity] = useState(1);
   const selectedVariant =
     variants.find((variant) => variant.sku === selectedSku) || defaultVariant;
+  const colourOptions = useMemo(() => getUniqueColourVariants(variants), [
+    variants,
+  ]);
+  const selectedColourKey = getVariantColourKey(selectedVariant);
+  const sizeOptions = useMemo(
+    () =>
+      variants.filter(
+        (variant) =>
+          variant.sku && getVariantColourKey(variant) === selectedColourKey,
+      ),
+    [selectedColourKey, variants],
+  );
+  const hasSelectableSizes =
+    sizeOptions.length > 1 && sizeOptions.some((variant) => variant.size);
   const selectedVariantAvailable = selectedVariant
     ? isVariantAvailable(selectedVariant)
     : product.inStock !== false;
@@ -58,6 +71,26 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
     setSelectedSku(sku);
     setActiveImageIndex(0);
     setQuantity(1);
+  }
+
+  function selectColour(variant) {
+    const colourKey = getVariantColourKey(variant);
+    const colourVariants = variants.filter(
+      (item) => getVariantColourKey(item) === colourKey,
+    );
+    const preferredVariant =
+      colourVariants.find(
+        (item) =>
+          item.size &&
+          item.size === selectedVariant?.size &&
+          isVariantAvailable(item),
+      ) ||
+      colourVariants.find(isVariantAvailable) ||
+      colourVariants[0];
+
+    if (preferredVariant?.sku) {
+      selectVariant(preferredVariant.sku);
+    }
   }
 
   function moveImage(direction) {
@@ -214,19 +247,19 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
             ) : null}
           </div>
 
-          {variants.length ? (
+          {colourOptions.length ? (
             <div className="mt-6">
               <h2 className="text-sm font-semibold text-brand-maroon">
                 Select colour
               </h2>
               <div className="mt-3 flex flex-wrap gap-2">
-                {variants.map((variant) => (
+                {colourOptions.map((variant) => (
                   <button
-                    key={variant.sku}
+                    key={getVariantColourKey(variant)}
                     type="button"
-                    onClick={() => selectVariant(variant.sku)}
+                    onClick={() => selectColour(variant)}
                     className={`flex cursor-pointer items-center gap-2 rounded-sm border px-3 py-2 text-sm transition-colors ${
-                      selectedVariant?.sku === variant.sku
+                      selectedColourKey === getVariantColourKey(variant)
                         ? "border-brand-maroon text-brand-maroon"
                         : "border-border text-muted-foreground hover:border-brand-maroon hover:text-brand-maroon"
                     }`}
@@ -237,6 +270,30 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
                       aria-hidden="true"
                     />
                     {variant.colour?.title || "Default"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {hasSelectableSizes ? (
+            <div className="mt-6">
+              <h2 className="text-sm font-semibold text-brand-maroon">
+                Select size
+              </h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {sizeOptions.map((variant) => (
+                  <button
+                    key={variant.sku}
+                    type="button"
+                    onClick={() => selectVariant(variant.sku)}
+                    className={`min-w-12 cursor-pointer rounded-sm border px-3 py-2 text-sm transition-colors ${
+                      selectedVariant?.sku === variant.sku
+                        ? "border-brand-maroon text-brand-maroon"
+                        : "border-border text-muted-foreground hover:border-brand-maroon hover:text-brand-maroon"
+                    }`}
+                  >
+                    {variant.size || "Default"}
                   </button>
                 ))}
               </div>
@@ -364,5 +421,30 @@ function isVariantAvailable(variant) {
 
 function getVariantStockLimit(variant) {
   return Math.max(Number(variant?.inventoryCount) || 0, 0);
+}
+
+function getUniqueColourVariants(variants) {
+  const colourMap = new Map();
+
+  for (const variant of variants) {
+    const colourKey = getVariantColourKey(variant);
+
+    if (!variant.sku || colourMap.has(colourKey)) {
+      continue;
+    }
+
+    colourMap.set(colourKey, variant);
+  }
+
+  return Array.from(colourMap.values());
+}
+
+function getVariantColourKey(variant) {
+  return (
+    variant?.colour?.slug ||
+    variant?.colour?.title ||
+    variant?.colour?._id ||
+    "default"
+  );
 }
 

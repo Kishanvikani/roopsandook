@@ -231,6 +231,9 @@ function BagRow({ row, onMoveToWishlist, onQuantityChange, onRemove }) {
           <p className="mt-1 text-xs text-muted-foreground">
             Colour: {row.variant.colour?.title || "Default"}
           </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Size: {getRowSize(row)}
+          </p>
         </div>
         <div className="flex items-end justify-between gap-3">
           <div className="flex shrink-0 gap-2 sm:flex-wrap">
@@ -316,4 +319,8 @@ function InfoBlock({ title, text, href }) {
 
 function getStockLimit(row) {
   return row.variant.inventoryCount || row.product.totalInventory || 1;
+}
+
+function getRowSize(row) {
+  return row.variant.size || row.product.size || "-";
 }

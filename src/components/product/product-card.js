@@ -63,7 +63,7 @@ export function ProductCard({
   const productHref = `/shop/${product.slug}?sku=${encodeURIComponent(
     selectedVariant?.sku || "",
   )}&from=${encodeURIComponent(listingHref)}`;
-  const variantDots = useMemo(() => variants.filter((variant) => variant.sku), [
+  const variantDots = useMemo(() => getUniqueColourVariants(variants), [
     variants,
   ]);
 
@@ -92,6 +92,26 @@ export function ProductCard({
       sku: selectedVariant.sku,
       stockLimit,
     });
+  }
+
+  function selectColour(variant) {
+    const colourKey = getVariantColourKey(variant);
+    const colourVariants = variants.filter(
+      (item) => getVariantColourKey(item) === colourKey,
+    );
+    const preferredVariant =
+      colourVariants.find(
+        (item) =>
+          item.size &&
+          item.size === selectedVariant?.size &&
+          isVariantAvailable(item),
+      ) ||
+      colourVariants.find(isVariantAvailable) ||
+      colourVariants[0];
+
+    if (preferredVariant?.sku) {
+      setSelectedSku(preferredVariant.sku);
+    }
   }
 
   function decreaseBagQuantity() {
@@ -224,11 +244,12 @@ export function ProductCard({
             <div className="flex items-center gap-1.5">
               {variantDots.slice(0, 5).map((variant) => (
                 <button
-                  key={variant.sku}
+                  key={getVariantColourKey(variant)}
                   type="button"
-                  onClick={() => setSelectedSku(variant.sku)}
+                  onClick={() => selectColour(variant)}
                   className={`h-4 w-4 cursor-pointer rounded-full border transition-transform ${
-                    selectedVariant?.sku === variant.sku
+                    getVariantColourKey(selectedVariant) ===
+                    getVariantColourKey(variant)
                       ? "scale-110 border-brand-maroon ring-2 ring-brand-maroon/25"
                       : "border-border"
                   }`}
@@ -295,6 +316,31 @@ function isVariantAvailable(variant) {
 
 function getVariantStockLimit(variant) {
   return Math.max(Number(variant?.inventoryCount) || 0, 0);
+}
+
+function getUniqueColourVariants(variants) {
+  const colourMap = new Map();
+
+  for (const variant of variants) {
+    const colourKey = getVariantColourKey(variant);
+
+    if (!variant.sku || colourMap.has(colourKey)) {
+      continue;
+    }
+
+    colourMap.set(colourKey, variant);
+  }
+
+  return Array.from(colourMap.values());
+}
+
+function getVariantColourKey(variant) {
+  return (
+    variant?.colour?.slug ||
+    variant?.colour?.title ||
+    variant?.colour?._id ||
+    "default"
+  );
 }
 
 function formatCardPrice(price, fallback = "Price on request") {
