@@ -323,7 +323,7 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
               />
               <DetailBlock
                 label="Size"
-                value={product.size}
+                value={selectedVariant?.size || product.size}
               />
             </div>
             {product.careInstructions ? (

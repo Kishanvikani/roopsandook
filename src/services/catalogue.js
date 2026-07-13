@@ -27,6 +27,7 @@ const productCardProjection = `{
   },
   variants[]{
     sku,
+    size,
     price,
     compareAtPrice,
     inventoryCount,
@@ -66,6 +67,7 @@ const productProjection = `{
   },
   variants[]{
     sku,
+    size,
     price,
     compareAtPrice,
     inventoryCount,
