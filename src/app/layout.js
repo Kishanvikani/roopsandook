@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Suspense } from "react";
 import { CommerceProvider } from "@/components/commerce/commerce-provider";
 import { FloatingWhatsapp } from "@/components/layout/floating-whatsapp";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -72,7 +73,9 @@ export default function RootLayout({ children }) {
     >
       <body className="flex min-h-full flex-col">
         <CommerceProvider>
-          <SiteHeader />
+          <Suspense fallback={null}>
+            <SiteHeader />
+          </Suspense>
           <main className="flex-1">{children}</main>
           <FloatingWhatsapp />
           <SiteFooter />

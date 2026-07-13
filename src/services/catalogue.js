@@ -370,7 +370,7 @@ export async function getRelatedProducts(product) {
 }
 
 export function filterProducts(products, filters) {
-  const query = filters.q?.trim().toLowerCase();
+  const queryTerms = getSearchTerms(filters.q);
   const parentCategories = toArray(filters.parentCategory);
   const categories = toArray(filters.category);
   const collections = toArray(filters.collection);
@@ -382,7 +382,7 @@ export function filterProducts(products, filters) {
 
   return products
     .filter((product) => {
-      if (query) {
+      if (queryTerms.length) {
         const haystack = [
           product.name,
           product.description,
@@ -398,7 +398,7 @@ export function filterProducts(products, filters) {
           .join(" ")
           .toLowerCase();
 
-        if (!haystack.includes(query)) {
+        if (!queryTerms.every((term) => haystack.includes(term))) {
           return false;
         }
       }
@@ -506,7 +506,7 @@ function getSelectedParentCategories(filters, categories) {
 }
 
 function buildProductFilterQuery(filters = {}) {
-  const query = filters.q?.trim() || "";
+  const queryTerms = getSearchTerms(filters.q);
   const parentCategories = toArray(filters.parentCategory);
   const categories = toArray(filters.category);
   const collections = toArray(filters.collection);
@@ -518,18 +518,27 @@ function buildProductFilterQuery(filters = {}) {
   const conditions = [`_type == "product"`, `defined(slug.current)`];
   const params = {};
 
-  if (query) {
-    conditions.push(`(
-      name match $query ||
-      shortDescription match $query ||
-      description match $query ||
-      category->title match $query ||
-      category->parentCategory->title match $query ||
-      count((collections[]->title)[@ match $query]) > 0 ||
-      count((materials[]->title)[@ match $query]) > 0 ||
-      count((variants[].colour->title)[@ match $query]) > 0
-    )`);
-    params.query = `*${query}*`;
+  if (queryTerms.length) {
+    const queryConditions = queryTerms.map((term, index) => {
+      const paramName = `queryTerm${index}`;
+      params[paramName] = `*${term}*`;
+
+      return `(
+        name match $${paramName} ||
+        shortDescription match $${paramName} ||
+        description match $${paramName} ||
+        category->title match $${paramName} ||
+        category->slug.current match $${paramName} ||
+        category->parentCategory->title match $${paramName} ||
+        category->parentCategory->slug.current match $${paramName} ||
+        count((collections[]->title)[@ match $${paramName}]) > 0 ||
+        count((materials[]->title)[@ match $${paramName}]) > 0 ||
+        count((variants[].colour->title)[@ match $${paramName}]) > 0 ||
+        count((variants[].colour->slug.current)[@ match $${paramName}]) > 0
+      )`;
+    });
+
+    conditions.push(`(${queryConditions.join(" && ")})`);
   }
 
   if (parentCategories.length) {
@@ -631,6 +640,19 @@ function parsePriceFilter(value) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getSearchTerms(value) {
+  return Array.from(
+    new Set(
+      String(value || "")
+        .toLowerCase()
+        .trim()
+        .split(/\s+/)
+        .map((term) => term.replace(/[^a-z0-9-]/g, ""))
+        .filter(Boolean),
+    ),
+  );
 }
 
 export function formatPrice(price) {

@@ -21,7 +21,7 @@ export const metadata = {
 export default async function ShopPage({ searchParams }) {
   const params = await searchParams;
   const filters = {
-    q: "",
+    q: getParam(params, "q"),
     parentCategory: getParams(params, "parentCategory"),
     category: getParams(params, "category"),
     collection: getParams(params, "collection"),

@@ -78,6 +78,7 @@ export function ShopCatalogue({
     () => ({
       ...filters,
       parentCategory: optimisticParams.getAll("parentCategory"),
+      q: optimisticParams.get("q") || "",
       category: optimisticParams.getAll("category"),
       collection: optimisticParams.getAll("collection"),
       colour: optimisticParams.getAll("colour"),
@@ -589,9 +590,19 @@ export function ShopCatalogue({
 
         <div className="relative">
           <div className="flex items-center justify-between gap-4">
-            <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight text-brand-maroon sm:text-5xl">
-              Traditional Jewellery
-            </h1>
+            <div>
+              <h1 className="font-display max-w-3xl text-4xl font-semibold leading-tight text-brand-maroon sm:text-5xl">
+                Traditional Jewellery
+              </h1>
+              {uiFilters.q ? (
+                <p className="mt-3 text-sm leading-6 text-brand-maroon/70">
+                  Search results for{" "}
+                  <span className="font-semibold text-brand-maroon">
+                    {uiFilters.q}
+                  </span>
+                </p>
+              ) : null}
+            </div>
             <button
               type="button"
               onClick={() => setIsFilterDrawerOpen(true)}
@@ -745,9 +756,9 @@ export function ShopCatalogue({
               <ActiveChips
                 activeChips={activeChips}
                 className="mt-5 flex"
+                hideReset
                 onRemove={removeChip}
                 onReset={resetFilters}
-                showReset
               />
 
               <div className="mt-5">
@@ -769,13 +780,20 @@ export function ShopCatalogue({
               </div>
             </div>
 
-            <div className="border-t border-border p-5">
+            <div className="grid grid-cols-2 gap-3 border-t border-border p-5">
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="grid h-11 w-full cursor-pointer place-items-center rounded-sm border border-brand-maroon text-xs font-semibold uppercase tracking-wide text-brand-maroon transition-colors hover:bg-brand-maroon hover:text-brand-ivory"
+              >
+                Reset
+              </button>
               <button
                 type="button"
                 onClick={() => setIsFilterDrawerOpen(false)}
                 className="grid h-11 w-full cursor-pointer place-items-center rounded-sm bg-brand-maroon text-xs font-semibold uppercase tracking-wide text-brand-ivory transition-colors hover:bg-brand-maroon/90"
               >
-                Show products
+                Show only
               </button>
             </div>
           </aside>
@@ -929,6 +947,7 @@ function ShopFilters({
 function ActiveChips({
   activeChips,
   className,
+  hideReset = false,
   onRemove,
   onReset,
   showReset = false,
@@ -949,13 +968,15 @@ function ActiveChips({
           {chip.label} x
         </button>
       ))}
-      <button
-        type="button"
-        onClick={onReset}
-        className="cursor-pointer rounded-sm bg-brand-ivory px-3 py-2 text-xs font-semibold text-brand-maroon transition-colors hover:bg-brand-ivory/70"
-      >
-        Reset all
-      </button>
+      {hideReset ? null : (
+        <button
+          type="button"
+          onClick={onReset}
+          className="cursor-pointer rounded-sm bg-brand-ivory px-3 py-2 text-xs font-semibold text-brand-maroon transition-colors hover:bg-brand-ivory/70"
+        >
+          Reset all
+        </button>
+      )}
     </div>
   );
 }
@@ -1097,6 +1118,14 @@ function ProductLoader() {
 
 function buildActiveChips(filters, options) {
   const chips = [];
+
+  if (filters.q) {
+    chips.push({
+      name: "q",
+      value: filters.q,
+      label: `Search: ${filters.q}`,
+    });
+  }
 
   addOptionChips(chips, "parentCategory", filters.parentCategory, options.categories);
   addOptionChips(chips, "category", filters.category, options.categories);
