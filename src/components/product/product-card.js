@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { useCommerce } from "@/components/commerce/commerce-provider";
 import { JewelleryPlaceholder } from "@/components/product/jewellery-placeholder";
 import { getColorSwatchStyle } from "@/constants/colorMapper";
+import { getProductImageAlt } from "@/lib/product-image-alt";
 
 export function ProductCard({
   product,
@@ -157,7 +158,11 @@ export function ProductCard({
             <div className="relative aspect-[4/5] overflow-hidden bg-brand-ivory">
               <Image
                 src={selectedImage.url}
-                alt={selectedImage.alt || product.name}
+                alt={getProductImageAlt({
+                  image: selectedImage,
+                  product,
+                  variant: selectedVariant,
+                })}
                 fill
                 sizes={
                   compact

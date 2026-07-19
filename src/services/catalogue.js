@@ -23,7 +23,7 @@ const productCardProjection = `{
   "materials": materials[]->{title, "slug": slug.current},
   "images": images[]{
     "url": asset->url,
-    "alt": coalesce(asset->altText, "Product image")
+    "alt": asset->altText
   },
   variants[]{
     sku,
@@ -35,7 +35,7 @@ const productCardProjection = `{
     "colour": colour->{title, "slug": slug.current, hexCode},
     "images": images[]{
       "url": asset->url,
-      "alt": coalesce(asset->altText, "Product image")
+      "alt": asset->altText
     }
   }
 }`;
@@ -63,7 +63,7 @@ const productProjection = `{
   "materials": materials[]->{title, "slug": slug.current},
   "images": images[]{
     "url": asset->url,
-    "alt": coalesce(asset->altText, "Product image")
+    "alt": asset->altText
   },
   variants[]{
     sku,
@@ -75,7 +75,7 @@ const productProjection = `{
     "colour": colour->{title, "slug": slug.current, hexCode},
     "images": images[]{
       "url": asset->url,
-      "alt": coalesce(asset->altText, "Product image")
+      "alt": asset->altText
     }
   }
 }`;

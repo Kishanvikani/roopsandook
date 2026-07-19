@@ -7,6 +7,7 @@ import { useEffect, useMemo } from "react";
 
 import { useCommerce } from "@/components/commerce/commerce-provider";
 import { JewelleryPlaceholder } from "@/components/product/jewellery-placeholder";
+import { getProductImageAlt } from "@/lib/product-image-alt";
 import { formatPrice } from "@/services/catalogue";
 
 const freeShippingThreshold = 1299;
@@ -209,7 +210,11 @@ function BagRow({ row, onMoveToWishlist, onQuantityChange, onRemove }) {
           <div className="relative h-full min-h-40 overflow-hidden bg-brand-ivory">
             <Image
               src={image.url}
-              alt={image.alt || row.product.name}
+              alt={getProductImageAlt({
+                image,
+                product: row.product,
+                variant: row.variant,
+              })}
               fill
               sizes="140px"
               className="object-contain transition-transform hover:scale-105"

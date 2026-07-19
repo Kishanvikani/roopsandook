@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductDetailClient } from "@/components/product/product-detail-client";
 import { absoluteUrl, siteName } from "@/constants/site";
+import { getProductImageAlt } from "@/lib/product-image-alt";
 import {
   getProductBySlug,
   getRelatedProducts,
@@ -18,6 +19,8 @@ export async function generateMetadata({ params }) {
       title: "Product not found",
     };
   }
+
+  const primaryVariant = product.variants[0];
 
   return {
     title: product.seoTitle || product.name,
@@ -43,7 +46,11 @@ export async function generateMetadata({ params }) {
         ? [
             {
               url: product.image.url,
-              alt: product.image.alt || product.name,
+              alt: getProductImageAlt({
+                image: product.image,
+                product,
+                variant: primaryVariant,
+              }),
             },
           ]
         : undefined,

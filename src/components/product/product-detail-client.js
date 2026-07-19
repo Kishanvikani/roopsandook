@@ -14,6 +14,7 @@ import { useMemo, useState } from "react";
 import { useCommerce } from "@/components/commerce/commerce-provider";
 import { JewelleryPlaceholder } from "@/components/product/jewellery-placeholder";
 import { getColorSwatchStyle } from "@/constants/colorMapper";
+import { getProductImageAlt } from "@/lib/product-image-alt";
 import { formatPrice } from "@/services/catalogue";
 
 export function ProductDetailClient({ product, backHref, initialSku }) {
@@ -155,7 +156,11 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
               <div className="relative aspect-[4/5] overflow-hidden bg-brand-ivory">
                 <Image
                   src={activeImage.url}
-                  alt={activeImage.alt || product.name}
+                  alt={getProductImageAlt({
+                    image: activeImage,
+                    product,
+                    variant: selectedVariant,
+                  })}
                   fill
                   priority
                   sizes="(min-width: 1024px) 46vw, 100vw"
@@ -204,7 +209,11 @@ export function ProductDetailClient({ product, backHref, initialSku }) {
                 >
                   <Image
                     src={image.url}
-                    alt={image.alt || product.name}
+                    alt={getProductImageAlt({
+                      image,
+                      product,
+                      variant: selectedVariant,
+                    })}
                     fill
                     sizes="20vw"
                     className="object-cover"
