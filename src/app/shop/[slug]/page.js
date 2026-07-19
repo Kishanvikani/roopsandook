@@ -6,9 +6,14 @@ import { ProductDetailClient } from "@/components/product/product-detail-client"
 import { absoluteUrl, siteName } from "@/constants/site";
 import { getProductImageAlt } from "@/lib/product-image-alt";
 import {
+  defaultSocialImage,
+  getProductSocialDescription,
+} from "@/lib/product-social-metadata";
+import {
   getProductBySlug,
   getRelatedProducts,
 } from "@/services/catalogue";
+import { getSocialImageUrl } from "@/services/sanity/image";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -21,6 +26,20 @@ export async function generateMetadata({ params }) {
   }
 
   const primaryVariant = product.variants[0];
+  const socialDescription = getProductSocialDescription(product);
+  const socialImageUrl = getSocialImageUrl(product.image?.url);
+  const socialImage = socialImageUrl
+    ? {
+        url: socialImageUrl,
+        width: 1200,
+        height: 630,
+        alt: getProductImageAlt({
+          image: product.image,
+          product,
+          variant: primaryVariant,
+        }),
+      }
+    : defaultSocialImage;
 
   return {
     title: product.seoTitle || product.name,
@@ -37,33 +56,14 @@ export async function generateMetadata({ params }) {
       url: `/shop/${product.slug}`,
       siteName,
       title: product.seoTitle || product.name,
-      description:
-        product.seoDescription ||
-        product.shortDescription ||
-        product.description ||
-        `Shop ${product.name} from Roop Sandook.`,
-      images: product.image?.url
-        ? [
-            {
-              url: product.image.url,
-              alt: getProductImageAlt({
-                image: product.image,
-                product,
-                variant: primaryVariant,
-              }),
-            },
-          ]
-        : undefined,
+      description: socialDescription,
+      images: [socialImage],
     },
     twitter: {
       card: "summary_large_image",
       title: product.seoTitle || product.name,
-      description:
-        product.seoDescription ||
-        product.shortDescription ||
-        product.description ||
-        `Shop ${product.name} from Roop Sandook.`,
-      images: product.image?.url ? [product.image.url] : undefined,
+      description: socialDescription,
+      images: [socialImage.url],
     },
   };
 }

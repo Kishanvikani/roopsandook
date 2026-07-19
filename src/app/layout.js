@@ -6,6 +6,7 @@ import { CommerceProvider } from "@/components/commerce/commerce-provider";
 import { FloatingWhatsapp } from "@/components/layout/floating-whatsapp";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { defaultSocialImage } from "@/lib/product-social-metadata";
 import { siteName, siteUrl } from "@/constants/site";
 import "./globals.css";
 
@@ -42,21 +43,14 @@ export const metadata = {
     title: siteName,
     description:
       "Traditional Indian jewellery from Roop Sandook, curated by category, colour, and occasion.",
-    images: [
-      {
-        url: "/extendedLogo.svg",
-        width: 1200,
-        height: 630,
-        alt: siteName,
-      },
-    ],
+    images: [defaultSocialImage],
   },
   twitter: {
     card: "summary_large_image",
     title: siteName,
     description:
       "Traditional Indian jewellery from Roop Sandook, curated by category, colour, and occasion.",
-    images: ["/extendedLogo.svg"],
+    images: [defaultSocialImage.url],
   },
   icons: {
     icon: "/smallLogo.svg",
